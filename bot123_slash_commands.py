@@ -1,15 +1,20 @@
+import os
+from dotenv import load_dotenv
+
 import discord
 import discord_slash
 from discord.ext import commands
 
+load_dotenv()
+
+TOKEN=os.getenv('DISCORD_TOKEN')
+ABECEDA=os.getenv('ABECEDA')
+ABECEDA_REACTIONS=os.getenv('ABECEDA_REACTIONS')
+
+
 bot = commands.Bot(command_prefix='!')
 
 slash = discord_slash.SlashCommand(bot, sync_commands=True) 
-
-TOKEN='OTIxNzA1Nzc1NzMzMzAxMjQ4.Yb2zZQ.JWRV8UE8VWaSEXEV7PkRwzOeSqU'
-ABECEDA='abcdefghijklmnoprstuvxyz'
-ABECEDA_REACTIONS=['🇦','🇧','🇨','🇩','🇪','🇫','🇬','🇭','🇮','🇯','🇰','🇱','🇲','🇳','🇴','🇵','🇷','🇸','🇹','🇺','🇻','🇽','🇾','🇿']
-POLL_CHANEL_ID=933736111010897920
 
 
 moznosti=[discord_slash.manage_commands.create_option(name='otázka',description='napíšte otázku' ,option_type=3, required=True)]
