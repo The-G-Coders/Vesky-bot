@@ -58,5 +58,29 @@ async def poll(ctx: discord_slash.SlashContext, **moznosti):
     
     return
 
+@slash.slash(name = 'edit_role_color', description = 'mení farbu role', 
+    options=[
+        discord_slash.manage_commands.create_option(name='role', description='vyber rolu ktorú chceš zmeniť', option_type=8, required=True),
+        discord_slash.manage_commands.create_option(name='farba', description='nová farba role (treba zadať v 16 sústave a pred číslo napísať 0x)', option_type=4, required=True)
+    ]
+)
+@commands.has_role('Moderator')
+async def edit_role_color(ctx: discord_slash.SlashContext, role, farba):
+    await role.edit(colour=discord.Colour(farba))
+    await ctx.send(f'farba role {role} bola zmenená na {farba}')
+
+@slash.slash(name = 'edit_role_name', description = 'mení farbu role', 
+    options=[
+        discord_slash.manage_commands.create_option(name='role', description='vyber rolu ktorú chceš zmeniť', option_type=8, required=True),
+        discord_slash.manage_commands.create_option(name='nazov', description='nový názov role', option_type=3, required=True),
+    ]
+)
+@commands.has_role('Moderator')
+async def edit_role_name(ctx: discord_slash.SlashContext, role, nazov):
+    povodny_nazov=role.name
+    await role.edit(name=nazov)
+    await ctx.send(f'názov role {povodny_nazov} bol zmenený na {role}')
+
+
 
 bot.run(TOKEN)
