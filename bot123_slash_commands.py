@@ -50,8 +50,7 @@ async def poll(ctx: discord_slash.SlashContext, **kwargs):
         return
 
     if role is None and len(kwargs) < 2 or role is not None and len(kwargs) < 3:
-        description += kwargs['otázka']
-        description += '\n  '
+        description += f'**{kwargs['otázka']}**'
         embed.description = description
         if role is not None:
             await channel.send(kwargs['ping'].mention())
@@ -63,6 +62,7 @@ async def poll(ctx: discord_slash.SlashContext, **kwargs):
         await ctx.reply('Poll successfully created')
         return
     used_letters = []
+    description += f'**{kwargs['otázka']}**\n'
     for key, value in kwargs.items():
 
         if key != 'otázka' and key != 'ping':
