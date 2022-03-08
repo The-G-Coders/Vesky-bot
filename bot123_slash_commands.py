@@ -64,7 +64,7 @@ async def poll(ctx: discord_slash.SlashContext, **kwargs):
         await ctx.reply('Poll successfully created')
         return
     used_letters = []
-    description += f'**{kwargs["otázka"]}**\n'
+    description += f'**{kwargs["otázka"]}**\n\n'
     for key, value in kwargs.items():
 
         if key != 'otázka' and key != 'ping':
