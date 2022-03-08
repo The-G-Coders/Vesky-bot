@@ -20,12 +20,14 @@ bot = commands.Bot(command_prefix='!')
 
 slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=os.getenv('DEBUG_GUILD_ID'))
 
-
-moznosti = [discord_slash.manage_commands.create_option(name='otázka', description='Napíšte otázku', option_type=3, required=True),
-            discord_slash.manage_commands.create_option(name='ping', description='Pingne rolu', option_type=8, required=False)]
+moznosti = [discord_slash.manage_commands.create_option(name='otázka', description='Napíšte otázku', option_type=3,
+                                                        required=True),
+            discord_slash.manage_commands.create_option(name='ping', description='Pingne rolu', option_type=8,
+                                                        required=False)]
 for i in ABECEDA:
     moznosti.append(
-        discord_slash.manage_commands.create_option(name=f'možnosť_{i}', description=f'Napíšte možnosť {i}', option_type=3, required=False)
+        discord_slash.manage_commands.create_option(name=f'možnosť_{i}', description=f'Napíšte možnosť {i}',
+                                                    option_type=3, required=False)
     )
 
 
@@ -50,7 +52,7 @@ async def poll(ctx: discord_slash.SlashContext, **kwargs):
         return
 
     if role is None and len(kwargs) < 2 or role is not None and len(kwargs) < 3:
-        description += f'**{kwargs['otázka']}**'
+        description += f'**{kwargs["otázka"]}**'
         embed.description = description
         if role is not None:
             await channel.send(kwargs['ping'].mention())
@@ -62,7 +64,7 @@ async def poll(ctx: discord_slash.SlashContext, **kwargs):
         await ctx.reply('Poll successfully created')
         return
     used_letters = []
-    description += f'**{kwargs['otázka']}**\n'
+    description += f'**{kwargs["otázka"]}**\n'
     for key, value in kwargs.items():
 
         if key != 'otázka' and key != 'ping':
@@ -70,8 +72,6 @@ async def poll(ctx: discord_slash.SlashContext, **kwargs):
             used_letters.append(key[-1])
         elif key == 'ping':
             await channel.send(f'<@&{value.id}>')
-
-
 
     embed.description = description
     message = await channel.send(embed=embed)
@@ -81,11 +81,14 @@ async def poll(ctx: discord_slash.SlashContext, **kwargs):
 
     await ctx.reply('Anketa vytvorená')
 
+
 @commands.has_role
 @slash.slash(name='role-color', description='Mení farbu role',
              options=[
-                 discord_slash.manage_commands.create_option(name='role', description='Vyber rolu ktorú chceš zmeniť', option_type=8, required=True),
-                 discord_slash.manage_commands.create_option(name='farba',  description='Nová farba role napr. #123abc', option_type=str, required=True)
+                 discord_slash.manage_commands.create_option(name='role', description='Vyber rolu ktorú chceš zmeniť',
+                                                             option_type=8, required=True),
+                 discord_slash.manage_commands.create_option(name='farba', description='Nová farba role napr. #123abc',
+                                                             option_type=str, required=True)
              ])
 @commands.has_permissions(administrator=True)
 async def role_color(ctx: discord_slash.SlashContext, role, farba: str):
