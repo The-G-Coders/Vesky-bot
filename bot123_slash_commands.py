@@ -14,10 +14,11 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 ABECEDA = 'abcdefghijklmnoprstuvyz'
 ABECEDA_REACTIONS = '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇷🇸🇹🇺🇻🇾🇿'
+POLL_CHANNEL_ID = os.getenv('POLL_CHANNEL_ID')
 
 bot = commands.Bot(command_prefix='!')
 
-slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=900429095215718430)
+slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=os.getenv('DEBUG_GUILD_ID'))
 
 
 moznosti = [discord_slash.manage_commands.create_option(name='otázka', description='Napíšte otázku', option_type=3, required=True),
@@ -35,35 +36,52 @@ async def on_ready():
 
 
 @slash.slash(name='poll', description='Vytvorí hlasovanie', options=moznosti)
-async def poll(ctx: discord_slash.SlashContext, **args):
+async def poll(ctx: discord_slash.SlashContext, **kwargs):
     embed = discord.Embed(title='Hlasovanie', description='', url='', color=discord.Color.blue())
     embed.set_author(name=ctx.author.display_name, url='', icon_url=ctx.author.avatar_url)
+    embed.set_footer(text=f'{bot.user}', icon_url=bot.user.avatar_url)
+    description = ''
+    role: discord.Role = kwargs.get('ping')
 
-    if len(args) == 1:
-        embed.add_field(name=args['otázka'], value='-------', inline=False)
-        message = await ctx.send(embed=embed)
+    channel = bot.get_channel(int(POLL_CHANNEL_ID))
+
+    if channel is None:
+        await ctx.reply("Invalid channel", hidden=True)
+        return
+
+    if role is None and len(kwargs) < 2 or role is not None and len(kwargs) < 3:
+        description += kwargs['otázka']
+        description += '\n  '
+        embed.description = description
+        if role is not None:
+            await channel.send(kwargs['ping'].mention())
+        message = await channel.send(embed=embed)
         ano = discord.utils.get(ctx.guild.emojis, name='YES')
         nie = discord.utils.get(ctx.guild.emojis, name='NO')
         await message.add_reaction(ano)
         await message.add_reaction(nie)
+        await ctx.reply('Poll successfully created')
         return
-    pouzite_pismena = []
-    obsah = ' \n'
-    for poradie, moznost in args.items():
+    used_letters = []
+    for key, value in kwargs.items():
 
-        if poradie != 'otázka':
-            obsah += f':regional_indicator_{poradie[-1]}: {moznost}\n\n'
-            pouzite_pismena.append(poradie[-1])
+        if key != 'otázka' and key != 'ping':
+            description += f':regional_indicator_{key[-1]}: {value}\n\n'
+            used_letters.append(key[-1])
+        elif key == 'ping':
+            await channel.send(f'<@&{value.id}>')
 
-    embed.add_field(name=args['otázka'], value=obsah, inline=False)
-    message = await ctx.send(embed=embed)
 
-    for k in pouzite_pismena:
+
+    embed.description = description
+    message = await channel.send(embed=embed)
+
+    for k in used_letters:
         await message.add_reaction(ABECEDA_REACTIONS[ABECEDA.index(k)])
 
-    return
+    await ctx.reply('Anketa vytvorená')
 
-
+@commands.has_role
 @slash.slash(name='role-color', description='Mení farbu role',
              options=[
                  discord_slash.manage_commands.create_option(name='role', description='Vyber rolu ktorú chceš zmeniť', option_type=8, required=True),
