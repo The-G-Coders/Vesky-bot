@@ -1,8 +1,10 @@
 import os
 import re
+import json
 import discord
 import discord_slash
 from time import time
+from datetime import datetime
 from dotenv import load_dotenv
 from discord.ext import commands
 
@@ -15,6 +17,8 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 ABECEDA = 'abcdefghijklmnoprstuvyz'
 ABECEDA_REACTIONS = '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇷🇸🇹🇺🇻🇾🇿'
 POLL_CHANNEL_ID = os.getenv('POLL_CHANNEL_ID')
+
+kalendar=[]
 
 bot = commands.Bot(command_prefix='!')
 
@@ -82,7 +86,7 @@ async def poll(ctx: discord_slash.SlashContext, **kwargs):
     await ctx.reply('Anketa vytvorená')
 
 
-@commands.has_role
+
 @slash.slash(name='role-color', description='Mení farbu role',
              options=[
                  discord_slash.manage_commands.create_option(name='role', description='Vyber rolu ktorú chceš zmeniť',
@@ -113,5 +117,37 @@ async def role_name(ctx: discord_slash.SlashContext, role, nazov):
     await role.edit(name=nazov)
     await ctx.send(f'Názov role {povodny_nazov} bol zmenený na {role}')
 
+@slash.slash(name='new_event', description='pridá udalosť do kalendára', 
+    options= [
+    discord_slash.manage_commands.create_option(name= 'name', description= 'názov udalosti', option_type=3,
+                                                required=True),
+    discord_slash.manage_commands.create_option(name= 'description', description= 'opis udalosti', option_type=3,
+                                                required=True),
+    discord_slash.manage_commands.create_option(name='date', description='dátum udalosti', option_type=3,
+                                                required=True),
+    discord_slash.manage_commands.create_option(name= 'ping', description='vyber koho má pingnúť', option_type=8,
+                                                required=False)
+    ]
+)
+async def new_event(ctx: discord_slash.SlashContext, name: str, description: str, date: str, ping=None):
+
+    date_list=date.split('.')
+    if len(date_list) == 2:
+        ping_time = datetime(2022, int(date_list[1]), int(date_list[0]), 16, 0, 0).timestamp()
+    else:
+        ping_time = datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 16, 0, 0).timestamp()
+    
+    ping_time_index=0
+    for i in kalendar:
+        if ping_time>i[2]:
+            break
+        ping_time_index+=1
+
+    kalendar.insert(ping_time_index, (name, description, ping_time, ping.name))
+
+    with open('calendar.txt', 'w') as subor:
+        json.dump(kalendar, subor)
+
+    await ctx.send('Udalosť bola úspešne pridaná.')
 
 bot.run(TOKEN)
