@@ -7,6 +7,7 @@ from time import time
 from datetime import datetime
 from dotenv import load_dotenv
 from discord.ext import commands
+from regex import DATE_PATTERN, get_separator
 
 startup = round(time() * 1000)
 print('Starting up')
@@ -17,7 +18,6 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 ABECEDA = 'abcdefghijklmnoprstuvyz'
 ABECEDA_REACTIONS = '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇷🇸🇹🇺🇻🇾🇿'
 POLL_CHANNEL_ID = os.getenv('POLL_CHANNEL_ID')
-DATE_REGEX = '^([1-9]|0[1-9]|1[0-9]|2[0-9]|3[0-1])[.]([1-9]|0[1-9]|1[0-2])[.](201[4-9]|202[0-9])'
 
 kalendar = []
 
@@ -133,25 +133,29 @@ async def role_name(ctx: discord_slash.SlashContext, role, nazov):
              ]
              )
 async def new_event(ctx: discord_slash.SlashContext, name: str, description: str, date: str, ping=None):
-    print(date.strip())
 
-    if not re.match(DATE_REGEX, date.strip()):
+    stripped = date.strip()
+
+    if not DATE_PATTERN.match(stripped):
         await ctx.reply("Neplatný formát dátumu", hidden=True)
         return
 
-    date_list = date.split('.')
+    date_list = date.split(get_separator(stripped))
     if len(date_list) == 2:
         ping_time = datetime(2022, int(date_list[1]), int(date_list[0]), 16, 0, 0).timestamp()
     else:
         ping_time = datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 16, 0, 0).timestamp()
 
     ping_time_index = 0
-    for i in kalendar:
-        if ping_time > i[2]:
+    for index in kalendar:
+        if ping_time > index[2]:
             break
         ping_time_index += 1
 
-    kalendar.insert(ping_time_index, (name, description, ping_time, ping.name))
+    if ping is None:
+        kalendar.insert(ping_time_index, (name, description, ping_time, 'no-ping'))
+    else:
+        kalendar.insert(ping_time_index, (name, description, ping_time, ping.name))
 
     with open('calendar.txt', 'w') as subor:
         json.dump(kalendar, subor)
