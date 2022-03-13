@@ -1,35 +1,37 @@
 import re
-import json
 import discord
 import discord_slash
-from time import time
+from time import time as tm
+from discord import utils
 from datetime import datetime
 from discord.ext import commands
-from yml import YmlConfig
-from regex import DATE_PATTERN, get_separator
+from lib.yml import YmlConfig
+from cogs.Tasks import Tasks
+from lib.regex import DATE_PATTERN, HOUR_PATTERN, get_separator
 
-startup = round(time() * 1000)
+startup = round(tm() * 1000)
 print('Starting up')
 
-config = YmlConfig('config.yml')
+config = YmlConfig('resources/config.yml')
+events = YmlConfig('resources/events.yml')
 
 TOKEN = config.get('auth.token')
-ABECEDA = 'abcdefghijklmnoprstuvyz'
-ABECEDA_REACTIONS = '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇷🇸🇹🇺🇻🇾🇿'
+ALPHABET = 'abcdefghijklmnoprstuvyz'
+ALPHABET_REACTIONS = '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇷🇸🇹🇺🇻🇾🇿'
 POLL_CHANNEL_ID = config.get('channel-ids.poll')
-
-kalendar = []
+ANNOUNCEMENTS_CHANNEL_ID = config.get('channel-ids.announcements')
+GUILD_ID = config.get('auth.debug-guild')
 
 bot = commands.Bot(command_prefix='!')
 
-slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=config.get('auth.debug-guild'))
+slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=GUILD_ID)
 
-moznosti = [discord_slash.manage_commands.create_option(name='otázka', description='Napíšte otázku', option_type=3,
-                                                        required=True),
-            discord_slash.manage_commands.create_option(name='ping', description='Pingne rolu', option_type=8,
-                                                        required=False)]
-for i in ABECEDA:
-    moznosti.append(
+poll_options = [discord_slash.manage_commands.create_option(name='otázka', description='Napíšte otázku', option_type=3,
+                                                            required=True),
+                discord_slash.manage_commands.create_option(name='ping', description='Pingne rolu', option_type=8,
+                                                            required=False)]
+for i in ALPHABET:
+    poll_options.append(
         discord_slash.manage_commands.create_option(name=f'možnosť_{i}', description=f'Napíšte možnosť {i}',
                                                     option_type=3, required=False)
     )
@@ -38,10 +40,10 @@ for i in ABECEDA:
 @bot.event
 async def on_ready():
     print(f'Bot is online as {bot.user}')
-    print(f'Started up in {round(time() * 1000) - startup} milliseconds')
+    print(f'Started up in {round(tm() * 1000) - startup} milliseconds')
 
 
-@slash.slash(name='poll', description='Vytvorí hlasovanie', options=moznosti)
+@slash.slash(name='poll', description='Vytvorí hlasovanie', options=poll_options)
 async def poll(ctx: discord_slash.SlashContext, **kwargs):
     embed = discord.Embed(title='Hlasovanie', description='', url='', color=discord.Color.blue())
     embed.set_author(name=ctx.author.display_name, url='', icon_url=ctx.author.avatar_url)
@@ -61,10 +63,8 @@ async def poll(ctx: discord_slash.SlashContext, **kwargs):
         if role is not None:
             await channel.send(kwargs['ping'].mention())
         message = await channel.send(embed=embed)
-        ano = discord.utils.get(ctx.guild.emojis, name='YES')
-        nie = discord.utils.get(ctx.guild.emojis, name='NO')
-        await message.add_reaction(ano)
-        await message.add_reaction(nie)
+        await message.add_reaction(utils.get(ctx.guild.emojis, name='YES'))
+        await message.add_reaction(utils.get(ctx.guild.emojis, name='NO'))
         await ctx.reply('Poll successfully created')
         return
     used_letters = []
@@ -81,7 +81,7 @@ async def poll(ctx: discord_slash.SlashContext, **kwargs):
     message = await channel.send(embed=embed)
 
     for k in used_letters:
-        await message.add_reaction(ABECEDA_REACTIONS[ABECEDA.index(k)])
+        await message.add_reaction(ALPHABET_REACTIONS[ALPHABET.index(k)])
 
     await ctx.reply('Anketa vytvorená')
 
@@ -112,53 +112,68 @@ async def role_color(ctx: discord_slash.SlashContext, role, farba: str):
              ])
 @commands.has_permissions(administrator=True)
 async def role_name(ctx: discord_slash.SlashContext, role, nazov):
-    povodny_nazov = role.name
+    previous_role_name = role.name
     await role.edit(name=nazov)
-    await ctx.send(f'Názov role {povodny_nazov} bol zmenený na {role}')
+    await ctx.send(f'Názov role {previous_role_name} bol zmenený na {role}')
 
 
 @slash.slash(name='new_event', description='pridá udalosť do kalendára',
              options=[
-                 discord_slash.manage_commands.create_option(name='name', description='názov udalosti', option_type=3,
+                 discord_slash.manage_commands.create_option(name='name', description='Názov udalosti', option_type=3,
                                                              required=True),
-                 discord_slash.manage_commands.create_option(name='description', description='opis udalosti',
+                 discord_slash.manage_commands.create_option(name='description', description='Opis udalosti',
                                                              option_type=3,
                                                              required=True),
-                 discord_slash.manage_commands.create_option(name='date', description='dátum udalosti', option_type=3,
+                 discord_slash.manage_commands.create_option(name='date', description='Dátum udalosti', option_type=3,
                                                              required=True),
-                 discord_slash.manage_commands.create_option(name='ping', description='vyber koho má pingnúť',
+                 discord_slash.manage_commands.create_option(name='time',
+                                                             description='Čas udalosti(oznámi 5 minut pred zaciatkon)',
+                                                             option_type=3,
+                                                             required=False),
+                 discord_slash.manage_commands.create_option(name='ping', description='Vyber koho má pingnúť',
                                                              option_type=8,
                                                              required=False)
              ]
              )
-async def new_event(ctx: discord_slash.SlashContext, name: str, description: str, date: str, ping=None):
-    stripped = date.strip()
+async def new_event(ctx: discord_slash.SlashContext, name: str, description: str, date: str, time: str, ping=None):
+    date_stripped = date.strip()
+    time_stripped = time.strip()
 
-    if not DATE_PATTERN.match(stripped):
+    if not DATE_PATTERN.match(date_stripped):
         await ctx.reply("Neplatný formát dátumu", hidden=True)
         return
 
-    date_list = date.split(get_separator(stripped))
-    if len(date_list) == 2:
-        ping_time = datetime(2022, int(date_list[1]), int(date_list[0]), 16, 0, 0).timestamp()
-    else:
-        ping_time = datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 16, 0, 0).timestamp()
+    if not HOUR_PATTERN.match(time_stripped):
+        await ctx.reply("Neplatný formát času", hidden=True)
+        return
 
-    ping_time_index = 0
-    for index in kalendar:
-        if ping_time > index[2]:
-            break
-        ping_time_index += 1
+    date_list = date_stripped.split(get_separator(date_stripped))
+    time_list = time_stripped.split(':')
+
+    ping_time = round(
+        datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]),
+                 0).timestamp())
 
     if ping is None:
-        kalendar.insert(ping_time_index, (name, description, ping_time, 'no-ping'))
+        events.data['events'][name.strip().replace(' ', '_')] = {
+            'description': description,
+            'time': ping_time,
+            'ping': 'no-ping'
+        }
     else:
-        kalendar.insert(ping_time_index, (name, description, ping_time, ping.name))
-
-    with open('calendar.txt', 'w') as subor:
-        json.dump(kalendar, subor)
+        events.data['events'][name.strip().replace(' ', '_')] = {
+            'description': description,
+            'time': ping_time,
+            'ping': f'<@&{ping.id}>'
+        }
+    events.save()
 
     await ctx.send('Udalosť bola úspešne pridaná.')
 
+
+def load_cogs():
+    bot.add_cog(Tasks(bot))
+
+load_cogs()
 
 bot.run(TOKEN)

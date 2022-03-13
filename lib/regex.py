@@ -30,12 +30,18 @@ clean_months_with_28 = '^(?:[1-9]|1[0-9]|2[0-8])({0})(?:[1-9]|1[0-2])\\3(?:{1})$
 
 clean_month_leap = '^29({0})2\\4(?:{1})$'.format(separators, leap_years)
 
-reg_months = '{0}|{1}|{2}|{3}'.format(clean_months_with_31, clean_months_with_29_or_30, clean_months_with_28,
-                                      clean_month_leap)
+reg_dates = '{0}|{1}|{2}|{3}'.format(clean_months_with_31, clean_months_with_29_or_30, clean_months_with_28,
+                                     clean_month_leap)
 
-named_reg = '{0}|{1}|{2}|{3}'.format(months_with_31, months_with_29_or_30, months_with_28, month_leap)
+named_reg_dates = '{0}|{1}|{2}|{3}'.format(months_with_31, months_with_29_or_30, months_with_28, month_leap)
 
-DATE_PATTERN = re.compile(reg_months)
+hours = '(?:[0-9]|1[0-9]|2[0-4])'
+minutes = '[0-5][0-9]'
+
+reg_time = f'^{hours}:{minutes}$'
+
+DATE_PATTERN = re.compile(reg_dates)
+HOUR_PATTERN = re.compile(reg_time)
 
 
 def get_separator(date: str):
@@ -48,11 +54,11 @@ def get_separator(date: str):
 
 
 def print_reg():
-    print(reg_months)
+    print(reg_dates)
 
 
 def print_named_reg():
-    print(named_reg)
+    print(named_reg_dates)
 
 
 def generate_years(count: int, gap: int, start: int):
@@ -60,3 +66,7 @@ def generate_years(count: int, gap: int, start: int):
     for i in range(count):
         print(dummy)
         dummy += gap
+
+
+if __name__ == '__main__':
+    pass

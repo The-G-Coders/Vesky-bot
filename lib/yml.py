@@ -18,14 +18,14 @@ class YmlConfig:
 
     def save(self):
         """
-        Converts the data variable to a yml file
+        Converts the resources variable to a yml file
         """
         with open(fr'{self.filepath}', 'w') as file:
             yaml.dump(self.data, file, default_flow_style=False, indent=True)
 
     def get(self, path: str):
         """
-        Gets the value associated with the key in the data variable
+        Gets the value associated with the key in the resources variable
         :param path: the path, separated by dots
         :return: the value. If not present, returns None
         """
