@@ -1,29 +1,28 @@
-import os
 import re
 import json
 import discord
 import discord_slash
 from time import time
 from datetime import datetime
-from dotenv import load_dotenv
 from discord.ext import commands
+from yml import YmlConfig
 from regex import DATE_PATTERN, get_separator
 
 startup = round(time() * 1000)
 print('Starting up')
 
-load_dotenv()
+config = YmlConfig('config.yml')
 
-TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN = config.get('auth.token')
 ABECEDA = 'abcdefghijklmnoprstuvyz'
 ABECEDA_REACTIONS = '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇷🇸🇹🇺🇻🇾🇿'
-POLL_CHANNEL_ID = os.getenv('POLL_CHANNEL_ID')
+POLL_CHANNEL_ID = config.get('channel-ids.poll')
 
 kalendar = []
 
 bot = commands.Bot(command_prefix='!')
 
-slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=os.getenv('DEBUG_GUILD_ID'))
+slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=config.get('auth.debug-guild'))
 
 moznosti = [discord_slash.manage_commands.create_option(name='otázka', description='Napíšte otázku', option_type=3,
                                                         required=True),
@@ -133,7 +132,6 @@ async def role_name(ctx: discord_slash.SlashContext, role, nazov):
              ]
              )
 async def new_event(ctx: discord_slash.SlashContext, name: str, description: str, date: str, ping=None):
-
     stripped = date.strip()
 
     if not DATE_PATTERN.match(stripped):
