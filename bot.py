@@ -135,25 +135,28 @@ async def role_name(ctx: discord_slash.SlashContext, role, nazov):
                                                              required=False)
              ]
              )
-async def new_event(ctx: discord_slash.SlashContext, name: str, description: str, date: str, time: str, ping=None):
+async def new_event(ctx: discord_slash.SlashContext, name: str, description: str, date: str, time: str = None, ping=None):
     date_stripped = date.strip()
-    time_stripped = time.strip()
-
     if not DATE_PATTERN.match(date_stripped):
-        await ctx.reply("Neplatný formát dátumu", hidden=True)
-        return
-
-    if not HOUR_PATTERN.match(time_stripped):
-        await ctx.reply("Neplatný formát času", hidden=True)
-        return
-
+            await ctx.reply("Neplatný formát dátumu", hidden=True)
+            return
     date_list = date_stripped.split(get_separator(date_stripped))
-    time_list = time_stripped.split(':')
 
+    if time is not None:
+        
+        time_stripped = time.strip()
+
+        if not HOUR_PATTERN.match(time_stripped):
+            await ctx.reply("Neplatný formát času", hidden=True)
+            return
+
+        time_list = time_stripped.split(':')
+
+    else:
+        time_list=[16, 0]
     ping_time = round(
-        datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]),
-                 0).timestamp())
-
+            datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]),
+                    0).timestamp())
     if ping is None:
         events.data['events'][name.strip().replace(' ', '_')] = {
             'description': description,
