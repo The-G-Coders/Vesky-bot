@@ -6,7 +6,7 @@ from discord import utils
 from datetime import datetime
 from discord.ext import commands
 from lib.yml import YmlConfig
-from cogs.Tasks import Tasks
+from Tasks import Tasks
 from lib.regex import DATE_PATTERN, HOUR_PATTERN, get_separator
 
 startup = round(tm() * 1000)
