@@ -2,15 +2,14 @@ import re
 import discord
 import discord_slash
 from discord import utils
-from time import time as tm
-from datetime import datetime
 from discord.ext import commands
 from discord_slash import SlashContext, manage_commands
 from Tasks import Tasks
+from lib.utils import *
 from lib.yml import YmlConfig
-from lib.regex import DATE_PATTERN, HOUR_PATTERN, get_separator
+from lib.regex import DATE_PATTERN, TIME_PATTERN, get_separator
 
-startup = round(tm() * 1000)
+startup = round(t() * 1000)
 print('Starting up')
 
 config = YmlConfig('resources/config.yml')
@@ -20,12 +19,11 @@ TOKEN = config.get('auth.token')
 ALPHABET = 'abcdefghijklmnoprstuvyz'
 ALPHABET_REACTIONS = '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇷🇸🇹🇺🇻🇾🇿'
 POLL_CHANNEL_ID = config.get('channel-ids.poll')
-ANNOUNCEMENTS_CHANNEL_ID = config.get('channel-ids.announcements')
 GUILD_ID = config.get('auth.debug-guild')
 
-bot = commands.Bot(command_prefix='!')
+bot = commands.Bot(command_prefix='!', intents=discord.Intents.default())
 
-slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=GUILD_ID)
+slash = discord_slash.SlashCommand(bot, sync_commands=False, debug_guild=GUILD_ID)
 
 poll_options = [manage_commands.create_option(name='otázka', description='Napíšte otázku', option_type=3, required=True),
                 manage_commands.create_option(name='ping', description='Pingne rolu', option_type=8, required=False)]
@@ -38,7 +36,7 @@ for i in ALPHABET:
 @bot.event
 async def on_ready():
     print(f'Bot is online as {bot.user}')
-    print(f'Started up in {round(tm() * 1000) - startup} milliseconds')
+    print(f'Started up in {round(t() * 1000) - startup} milliseconds')
 
 
 @slash.slash(name='poll', description='Vytvorí hlasovanie', options=poll_options)
@@ -116,7 +114,7 @@ async def role_name(ctx: SlashContext, role, nazov):
     manage_commands.create_option(name='time', description='Čas udalosti(oznámi 5 minut pred zaciatkon)', option_type=3, required=False),
     manage_commands.create_option(name='ping', description='Vyber koho má pingnúť', option_type=8, required=False)
 ])
-async def new_event(ctx: SlashContext, name: str, description: str, date: str, time: str = None, ping=None):
+async def new_event(ctx: SlashContext, name: str, description: str, date: str, time: str = None, ping: discord.Role = None):
     if event_exists(name):
         await ctx.send("Event s takýmto menom uz existuje")
         return
@@ -132,20 +130,20 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
 
         time_stripped = time.strip()
 
-        if not HOUR_PATTERN.match(time_stripped):
+        if not TIME_PATTERN.match(time_stripped):
             await ctx.reply("Neplatný formát času", hidden=True)
             return
 
         time_list = time_stripped.split(':')
 
-        ping_time = datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0).timestamp()
+        ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0))
     else:
-        ping_time = datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 0, 0, 10).timestamp()
+        ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 0, 0, 10))
 
     events.data['events'][name.strip().replace(' ', '_')] = {
         'description': description,
-        'time': round(ping_time),
-        'ping': f'<@&{ping.id}>' if ping is not None else 'no-ping'
+        'time': ping_time,
+        'ping': ping.mention if ping is not None else 'no-ping'
     }
 
     events.save()
@@ -155,31 +153,19 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
 
 @slash.slash(name='clear', description="Vymaže správy v kanáli podľa parametrov dalej špefikovaných", options=[
     manage_commands.create_option(name='count', description='Počet správ ktoré budú vymazané', option_type=4, required=False),
-    manage_commands.create_option(name='filter_by_role', description='Správy konkrétnej role', option_type=8, required=False),
     manage_commands.create_option(name='filter_by_user', description='Správy konkrétneho usera', option_type=6, required=False)
 ])
 @commands.has_permissions(manage_messages=True)
-async def clear(ctx: SlashContext, count: int = None, filter_by_role: discord.Role = None, filter_by_user: discord.User = None):
-    if filter_by_role is not None and filter_by_user is not None:
-        await ctx.reply('Oba filtre nemôžu byť naraz aktívne', hidden=True)
-        return
-    # TODO clear command
+async def clear(ctx: SlashContext, count: int = None, filter_by_user: discord.User = None):
+
+    # TODO filter by user?
 
     if count is None:
-        if filter_by_role is not None:
-            pass
-        elif filter_by_user is not None:
-            pass
-        else:
-            await ctx.channel.purge()
+        await ctx.channel.purge()
     else:
         if count > 100:
             await ctx.reply('Môžeš vymazať najviac 100 správ naraz', hidden=True)
             return
-        if filter_by_role is not None:
-            pass
-        elif filter_by_user is not None:
-            pass
         else:
             await ctx.channel.purge(limit=count)
     await ctx.reply('Správy úspešne vymazané', hidden=True)
@@ -197,7 +183,7 @@ def load_cogs():
 
 
 def event_exists(name: str):
-    for key in events.data.keys():
+    for key in events.get("events"):
         if key == name.strip().replace(' ', '_'):
             return True
     return False

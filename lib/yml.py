@@ -18,10 +18,15 @@ class YmlConfig:
 
     def save(self):
         """
-        Converts the resources variable to a yml file
+        Saves the contents of the data field to the yml file
         """
         with open(fr'{self.filepath}', 'w') as file:
             yaml.dump(self.data, file, default_flow_style=False, indent=True)
+
+    def overwrite(self, content: dict):
+        """Overwrites the data with the dictionary provided and saves it to the yml file"""
+        with open(fr'{self.filepath}', 'w') as file:
+            yaml.dump(content, file, default_flow_style=False, indent=True)
 
     def get(self, path: str):
         """

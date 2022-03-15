@@ -41,7 +41,7 @@ minutes = '[0-5][0-9]'
 reg_time = f'^{hours}:{minutes}$'
 
 DATE_PATTERN = re.compile(reg_dates)
-HOUR_PATTERN = re.compile(reg_time)
+TIME_PATTERN = re.compile(reg_time)
 
 
 def get_separator(date: str):
