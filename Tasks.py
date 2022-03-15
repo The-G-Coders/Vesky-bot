@@ -12,6 +12,7 @@ class Tasks(commands.Cog):
         self.config = YmlConfig('resources/config.yml')
         self.events = YmlConfig('resources/events.yml')
         self.channel: discord.TextChannel = bot.get_channel(self.config.get('channel-ids.announcements'))
+        print('cog has been loaded')
         self.announce_event.start()
 
     def cog_unload(self):
@@ -19,18 +20,23 @@ class Tasks(commands.Cog):
 
     @tasks.loop(seconds=interval)
     async def announce_event(self):
+        self.events = YmlConfig('resources/events.yml')
         temp: dict = self.events.get('events')
+        _5_minutes = 300
         _16_hours = 57600
         one_day = 86400
         interval_halved = self.interval / 2
+        print(tm())
         for name, data in temp.items():
             announce_time = data['time']
-            if abs(announce_time - announce_time % one_day - one_day + _16_hours - tm()) < interval_halved:
+            day_before_16_00 = announce_time - announce_time % one_day - one_day + _16_hours
+            print(announce_time - _5_minutes - tm())
+            if abs(day_before_16_00 - tm()) <= interval_halved:
                 await self.channel.send(f"Zajtra bude event menom {name.replace('_', ' ')}")
                 if announce_time % one_day == 10:
                     self.delete_event(name)
-
-            elif announce_time % one_day != 10 and abs(announce_time - self.interval - tm()) < interval_halved:
+            
+            elif announce_time % one_day != 10 and abs(announce_time - _5_minutes - tm()) <= interval_halved:
                 await self.channel.send(f"O chvilu bude event menom {name.replace('_', ' ')}")
                 self.delete_event(name)
 
