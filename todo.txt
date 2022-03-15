@@ -1,0 +1,9 @@
+TODO:
+    edit readme.md
+    upgrade clear command to user filtering
+    add thumbnail to a poll
+    update discord.py
+    convert to messages.yml
+
+IDEAS:
+    add command-log
