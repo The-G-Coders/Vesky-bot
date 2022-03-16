@@ -4,6 +4,8 @@ TODO:
     add thumbnail to a poll
     update discord.py
     convert to messages.yml
+    edit main color
+    show events command
 
 IDEAS:
     add command-log
