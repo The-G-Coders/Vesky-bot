@@ -27,7 +27,7 @@ def seconds_to_time(seconds: int):
     secs = seconds % 86400
     hours = secs // 3600
     minutes = (secs - hours * 3600) // 60
-    return f'{hours}:{minutes}'
+    return f'{hours}:{minutes if minutes > 9 else f"0{minutes}"}'
 
 
 def capitalize_first_letter(to_capitalize: str):
