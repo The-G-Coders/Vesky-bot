@@ -7,13 +7,18 @@ from discord_slash import SlashContext, manage_commands
 from Tasks import Tasks
 from lib.utils import *
 from lib.yml import YmlConfig
+from lib.embeds import Embeds
 from lib.regex import DATE_PATTERN, TIME_PATTERN, get_separator
 
 startup = round(t() * 1000)
 print('Starting up')
 
+bot = commands.Bot(command_prefix='!', intents=discord.Intents.default())
+
 config = YmlConfig('resources/config.yml')
 events = YmlConfig('resources/events.yml')
+
+embeds = Embeds(bot)
 
 TOKEN = config.get('auth.token')
 ALPHABET = 'abcdefghijklmnoprstuvyz'
@@ -21,7 +26,6 @@ ALPHABET_REACTIONS = '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳�
 POLL_CHANNEL_ID = config.get('channel-ids.poll')
 GUILD_ID = config.get('auth.debug-guild')
 
-bot = commands.Bot(command_prefix='!', intents=discord.Intents.default())
 
 slash = discord_slash.SlashCommand(bot, sync_commands=False, debug_guild=GUILD_ID)
 
@@ -61,7 +65,7 @@ async def poll(ctx: SlashContext, **kwargs):
         message = await channel.send(embed=embed)
         await message.add_reaction(utils.get(ctx.guild.emojis, name='YES'))
         await message.add_reaction(utils.get(ctx.guild.emojis, name='NO'))
-        await ctx.reply('Poll successfully created')
+        await ctx.reply(embed=embeds.default(title='Anketa úspešne vytvorená!'))
         return
     used_letters = []
     description += f'**{kwargs["otázka"]}**\n\n'
@@ -79,7 +83,7 @@ async def poll(ctx: SlashContext, **kwargs):
     for k in used_letters:
         await message.add_reaction(ALPHABET_REACTIONS[ALPHABET.index(k)])
 
-    await ctx.reply('Anketa vytvorená')
+    await ctx.reply(embed=embeds.default(title='Anketa úspešne vytvorená!'))
 
 
 @slash.slash(name='role-color', description='Mení farbu role', options=[
@@ -89,7 +93,7 @@ async def poll(ctx: SlashContext, **kwargs):
 @commands.has_permissions(administrator=True)
 async def role_color(ctx: SlashContext, role, farba: str):
     if not re.match('(#[0-9a-fA-F]{6})', farba):
-        await ctx.reply('Farba musí byť vo formáte #1a2b3c', hidden=True)
+        await ctx.reply(embed=embeds.error('Farba musí byť vo formáte #1a2b3c'), hidden=True)
         return
     colour = discord.Colour(int(f'0x{farba.removeprefix("#")}', 16))
     await role.edit(colour=colour)
@@ -116,13 +120,13 @@ async def role_name(ctx: SlashContext, role, nazov):
 ])
 async def new_event(ctx: SlashContext, name: str, description: str, date: str, time: str = None, ping: discord.Role = None):
     if event_exists(name):
-        await ctx.send("Event s takýmto menom uz existuje")
+        await ctx.reply(embed=embeds.error('Event s takýmto menom uz existuje'), hidden=True)
         return
 
     date_stripped = date.strip()
 
     if not DATE_PATTERN.match(date_stripped):
-        await ctx.reply("Neplatný formát dátumu", hidden=True)
+        await ctx.reply(embed=embeds.error('Neplatný formát dátumu!'), hidden=True)
         return
     date_list = date_stripped.split(get_separator(date_stripped))
 
@@ -131,7 +135,7 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
         time_stripped = time.strip()
 
         if not TIME_PATTERN.match(time_stripped):
-            await ctx.reply("Neplatný formát času", hidden=True)
+            await ctx.reply(embed=embeds.error('Neplatný formát ćasu!'), hidden=True)
             return
 
         time_list = time_stripped.split(':')
@@ -143,12 +147,12 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
     events.data['events'][name.strip().replace(' ', '_')] = {
         'description': description,
         'time': ping_time,
-        'ping': ping.mention if ping is not None else 'no-ping'
+        'role': 'no-role' if ping is None else 'everyone' if ping.name == 'everyone' else ping.id
     }
 
     events.save()
 
-    await ctx.send('Udalosť bola úspešne pridaná.')
+    await ctx.reply(embed=embeds.default(title='Udalosť bola úspešne pridaná!'), hidden=True)
 
 
 @slash.slash(name='clear', description="Vymaže správy v kanáli podľa parametrov dalej špefikovaných", options=[
@@ -164,17 +168,17 @@ async def clear(ctx: SlashContext, count: int = None, filter_by_user: discord.Us
         await ctx.channel.purge()
     else:
         if count > 100:
-            await ctx.reply('Môžeš vymazať najviac 100 správ naraz', hidden=True)
+            await ctx.reply(embed=embeds.error('Môžeš vymazať najviac 100 správ naraz'), hidden=True)
             return
         else:
             await ctx.channel.purge(limit=count)
-    await ctx.reply('Správy úspešne vymazané', hidden=True)
+    await ctx.reply(embed=embeds.default(title='Správy úspešne vymazané'), hidden=True)
 
 
 @bot.event
 async def on_slash_command_error(ctx: SlashContext, error: Exception):
     if isinstance(error, commands.MissingPermissions):
-        await ctx.reply('Na použitie tohto príkazu nemáš oprávnenie', hidden=True)
+        await ctx.reply(embed=embeds.error('Na použitie tohto príkazu nemáš oprávnenie'), hidden=True)
         return
 
 
