@@ -25,6 +25,7 @@ class YmlConfig:
 
     def overwrite(self, content: dict):
         """Overwrites the data with the dictionary provided and saves it to the yml file"""
+        self.data = content
         with open(fr'{self.filepath}', 'w') as file:
             yaml.dump(content, file, default_flow_style=False, indent=True)
 
