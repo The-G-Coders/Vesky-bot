@@ -7,8 +7,8 @@ from time import strftime, localtime
 from discord_slash import SlashContext, manage_commands
 from Tasks import Tasks
 from lib.utils import *
+from lib.embeds import *
 from lib.yml import YmlConfig
-from lib.embeds import Embeds, Colors
 from lib.regex import DATE_PATTERN, TIME_PATTERN, get_separator
 
 startup = round(t() * 1000)
@@ -45,9 +45,8 @@ async def on_ready():
 
 @slash.slash(name='poll', description='Vytvorí hlasovanie', options=poll_options)
 async def poll(ctx: SlashContext, **kwargs):
-    embed = discord.Embed(title='Hlasovanie', description='', url='', color=Colors.MAIN)
+    embed = embeds.default(title='Hlasovanie', thumbnail='https://clipart.info/images/ccovers/1484942349ios-emoji-white-question-mark-ornament.png')
     embed.set_author(name=ctx.author.display_name, url='', icon_url=ctx.author.avatar_url)
-    embed.set_footer(text=f'{bot.user}', icon_url=bot.user.avatar_url)
     description = ''
     role: discord.Role = kwargs.get('ping')
 
@@ -58,7 +57,7 @@ async def poll(ctx: SlashContext, **kwargs):
         return
 
     if role is None and len(kwargs) < 2 or role is not None and len(kwargs) < 3:
-        description += f'**{kwargs["otázka"]}**'
+        description += f'> **{kwargs["otázka"]}**'
         embed.description = description
         if role is not None:
             await channel.send(kwargs['ping'].mention())
@@ -86,7 +85,7 @@ async def poll(ctx: SlashContext, **kwargs):
     await ctx.reply(embed=embeds.default(title='Anketa úspešne vytvorená!'))
 
 
-@slash.slash(name='role-color', description='Mení farbu role', options=[
+@slash.slash(name='role-color', description='Zmení farbu role', options=[
     manage_commands.create_option(name='role', description='Vyber rolu ktorú chceš zmeniť', option_type=8, required=True),
     manage_commands.create_option(name='farba', description='Nová farba role napr. #123abc', option_type=str, required=True)
 ])
@@ -95,12 +94,12 @@ async def role_color(ctx: SlashContext, role, farba: str):
     if not re.match('(#[0-9a-fA-F]{6})', farba):
         await ctx.reply(embed=embeds.error('Farba musí byť vo formáte #1a2b3c'), hidden=True)
         return
-    colour = discord.Colour(int(f'0x{farba.removeprefix("#")}', 16))
-    await role.edit(colour=colour)
-    await ctx.send(f'Farba role {role} bola zmenená na {colour}')
+    color = from_hex(farba.removeprefix("#"))
+    await role.edit(colour=color)
+    await ctx.send(f'Farba role {role} bola zmenená na {color}')
 
 
-@slash.slash(name='role-name', description='Mení meno role', options=[
+@slash.slash(name='role-name', description='Zmení meno role', options=[
     manage_commands.create_option(name='role', description='Vyber rolu ktorú chceš zmeniť', option_type=8, required=True),
     manage_commands.create_option(name='nazov', description='Nový názov role', option_type=3, required=True),
 ])
@@ -111,7 +110,7 @@ async def role_name(ctx: SlashContext, role, nazov):
     await ctx.send(f'Názov role {previous_role_name} bol zmenený na {role}')
 
 
-@slash.slash(name='new_event', description='pridá udalosť do kalendára', options=[
+@slash.slash(name='new_event', description='Pridá udalosť do kalendára', options=[
     manage_commands.create_option(name='name', description='Názov udalosti', option_type=3, required=True),
     manage_commands.create_option(name='description', description='Opis udalosti', option_type=3, required=True),
     manage_commands.create_option(name='date', description='Dátum udalosti', option_type=3, required=True),
@@ -155,7 +154,7 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
     await ctx.reply(embed=embeds.default(title='Udalosť bola úspešne pridaná!'), hidden=True)
 
 
-@slash.slash(name='show_events', description='zobrazí naplánované udalosti')
+@slash.slash(name='show_events', description='Zobrazí naplánované udalosti')
 async def show_events(ctx: SlashContext):
     temp: dict = events.get('events')
     embed = embeds.default(title='Kalendár')
@@ -169,21 +168,37 @@ async def show_events(ctx: SlashContext):
     await ctx.send(embed=embed, hidden=True)
 
 
-@slash.slash(name='clear', description="Vymaže správy v kanáli podľa parametrov dalej špefikovaných", options=[
-    manage_commands.create_option(name='count', description='Počet správ ktoré budú vymazané', option_type=4, required=False),
-    manage_commands.create_option(name='filter_by_user', description='Správy konkrétneho usera', option_type=6, required=False)
+@slash.slash(name='clear', description="Vymaže správy v kanáli", options=[
+    manage_commands.create_option(name='count', description='Počet správ ktoré budú vymazané', option_type=4, required=True)
 ])
 @commands.has_permissions(manage_messages=True)
-async def clear(ctx: SlashContext, count: int = None, filter_by_user: discord.User = None):
-    if count is None:
-        await ctx.channel.purge()
+async def clear(ctx: SlashContext, count: int):
+    await ctx.defer(hidden=True)
+    if count > 100:
+        await ctx.reply(embed=embeds.error('Môžeš vymazať najviac 100 správ naraz'), hidden=True)
+        return
     else:
-        if count > 100:
-            await ctx.reply(embed=embeds.error('Môžeš vymazať najviac 100 správ naraz'), hidden=True)
-            return
-        else:
-            await ctx.channel.purge(limit=count)
+        await ctx.channel.purge(limit=count)
+
     await ctx.reply(embed=embeds.default(title='Správy úspešne vymazané'), hidden=True)
+
+
+@slash.slash(name='help', description='Vypíše všetky príkazy')
+async def help(ctx: SlashContext):
+    category_id = config.get('category-ids.bot')
+    if ctx.channel.category_id != category_id:
+        await ctx.reply(embed=embeds.error(f"Tento command môžeš použiť len v {utils.get(bot.get_guild(GUILD_ID).categories, id=category_id).name} kategórii"), hidden=True)
+        return
+    desc = CommandDescription()
+    desc.add_command('poll', 'Vytvorí hlasovanie')
+    desc.add_command('new_event', 'Pridá udalosť do kalendára')
+    desc.add_command('show_events', 'Zobrazí naplánované udalosti')
+    desc.add_break('> **:warning: Obmedzenie:** Funkcie vyhradené len pre ľudí s oprávnením')
+    desc.add_command('clear', 'Vymaže správy v kanáli')
+    desc.add_command('role-color', 'Zmení farbu role')
+    desc.add_command('role-name', 'Zmení meno role')
+    eb = embeds.default(title="Zoznam príkazov", desc=desc.to_string())
+    await ctx.reply(embed=eb, hidden=False)
 
 
 @bot.event
@@ -200,7 +215,9 @@ async def on_message(message: discord.Message):
     if message.content == config.get('auth.shutdown-password'):
         if author.guild_permissions.administrator:
             await message.delete()
-            await author.send('Bot bol uspesne vypnuty!')
+            await author.send('Bot bol uspesne vypnuty a jeho vypnutie zaznamenané!')
+            with open('resources/shutdown.log', 'w') as file:
+                file.write(f"Bot turned off by {author} at {epoch()} timezone epoch!\n")
             await bot.close()
             exit(69)
 
