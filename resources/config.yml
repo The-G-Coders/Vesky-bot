@@ -1,17 +1,20 @@
+# Test Server
 auth:
   shutdown-password: '&pistajepan&@'
-  # SpongeBot token
   token: 'ODgyMjM2NjMxODkxOTc2MjMz.YS4c5A.SalvykGBczPTxGiiE_7lq5BAzOE'
-  # Test server
   debug-guild: 889891449901056081
-# bot123 token
-#  token: 'OTIxNzA1Nzc1NzMzMzAxMjQ4.Yb2zZQ.ZryAwX-GU3TscVPdjoPwkUUFb7Y'
-# Kvinta B server
-#  debug-guild: 900429095215718430
 channel-ids:
-  # Test server
   poll: 919311688342331402
   announcements: 952944023239278622
-  # Kvinta B server
+category-ids:
+  bot: 919311719220776960
+# Kvinta B
+#auth:
+#  shutdown-password: '&pistajepan&@'
+#  token: 'OTIxNzA1Nzc1NzMzMzAxMjQ4.Yb2zZQ.ZryAwX-GU3TscVPdjoPwkUUFb7Y'
+#  debug-guild: 900429095215718430
+#channel-ids:
 #  poll: 912855647266152488
 #  announcements: 922054308147658773
+#category-ids:
+#  bot: 911220880292585492
