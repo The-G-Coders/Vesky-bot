@@ -158,6 +158,10 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
 async def show_events(ctx: SlashContext):
     temp: dict = events.get('events')
     embed = embeds.default(title='Kalendár')
+    if len(temp) == 0:
+        embed.description = "**Kalendár je prázdny...**"
+        await ctx.reply(embed=embed, hidden=True)
+        return
     for name, data in sorted_event_dict(temp, key='time'):
         desc = wrap_text(data['description'], 45)
         if is_10_secs(data['time']):
