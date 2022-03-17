@@ -1,0 +1,3 @@
+discord.py
+PyYAML~=6.0
+discord-py-slash-command
