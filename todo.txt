@@ -1,8 +1,8 @@
 TODO:
-    add thumbnail to a poll
-    upgrade clear command to user filtering
+    per user slow-mode
     convert to messages.yml
     edit readme.md
 
 IDEAS:
+    upgrade clear command to user filtering
     add command-log
