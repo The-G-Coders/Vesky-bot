@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from lib.yml import YmlConfig
 
 
 def from_hex(hex_str: str):
@@ -23,12 +24,15 @@ class Embeds:
             eb.title = title
         if thumbnail is not None:
             eb.set_thumbnail(url=thumbnail)
-        eb.set_footer(text=f'{self.bot.user}', icon_url=self.bot.user.avatar_url)
+        guild: discord.Guild = self.bot.get_guild(YmlConfig('resources/config.yml').get('auth.debug-guild'))
+        me: discord.Member = guild.me
+        name = me.display_name if me is not None else self.bot.user
+        eb.set_footer(text=name, icon_url=self.bot.user.avatar_url)
         return eb
 
 
 class Colors:
-    MAIN = from_hex('#f123ff')
+    MAIN = from_hex('#e8e8e8')
     ERROR = from_hex('#c70000')
 
     RED = from_hex('#ff0000')

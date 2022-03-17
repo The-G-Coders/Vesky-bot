@@ -23,8 +23,8 @@ class Tasks(commands.Cog):
     async def announce_event(self):
         self.events = YmlConfig('resources/events.yml')
         temp: dict = self.events.get('events')
-        _5_minutes = 0
-        announcement_time = 58920
+        _5_minutes = 300
+        announcement_time = 57600  # 16h atm
         one_day = 86400
         interval_halved = self.interval / 2
         to_announce: dict = {}

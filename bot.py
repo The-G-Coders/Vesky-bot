@@ -1,9 +1,9 @@
 import re
-import time
 import discord
 import discord_slash
 from discord import utils
 from discord.ext import commands
+from time import strftime, localtime
 from discord_slash import SlashContext, manage_commands
 from Tasks import Tasks
 from lib.utils import *
@@ -26,7 +26,6 @@ ALPHABET = 'abcdefghijklmnoprstuvyz'
 ALPHABET_REACTIONS = '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇷🇸🇹🇺🇻🇾🇿'
 POLL_CHANNEL_ID = config.get('channel-ids.poll')
 GUILD_ID = config.get('auth.debug-guild')
-
 
 slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=GUILD_ID)
 
@@ -136,7 +135,7 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
         time_stripped = time.strip()
 
         if not TIME_PATTERN.match(time_stripped):
-            await ctx.reply(embed=embeds.error('Neplatný formát ćasu!'), hidden=True)
+            await ctx.reply(embed=embeds.error('Neplatný formát času!'), hidden=True)
             return
 
         time_list = time_stripped.split(':')
@@ -156,18 +155,18 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
     await ctx.reply(embed=embeds.default(title='Udalosť bola úspešne pridaná!'), hidden=True)
 
 
-@slash.slash(name = 'show_events', description = 'zobrazí naplánované udalosti')
+@slash.slash(name='show_events', description='zobrazí naplánované udalosti')
 async def show_events(ctx: SlashContext):
     temp: dict = events.get('events')
-    embed = embeds.default(title='kalendár')
-    for name, data in sorted_event_dict(temp, key = 'time'):
-        if data['time'] % 86400 == 10:
-            value = data['description'] + '\n' + time.strftime('%d-%m-%Y', time.localtime(data['time'] - 3600))
+    embed = embeds.default(title='Kalendár')
+    for name, data in sorted_event_dict(temp, key='time'):
+        desc = wrap_text(data['description'], 45)
+        if is_10_secs(data['time']):
+            value = desc + '\n**Dátum:** ' + strftime('%d.%m.%Y', localtime(data['time'] - 3600))
         else:
-            value = data['description'] + '\n' + time.strftime('%H:%M:%S %d-%m-%Y', time.localtime(data['time'] - 3600))
-        embed.add_field(name=name, value=value)
-    ctx.send(embed=embed, hidden=True)
-
+            value = desc + '\n**Dátum:** ' + strftime('%H:%M:%S %d.%m.%Y', localtime(data['time'] - 3600))
+        embed.add_field(name=capitalize_first_letter(name.replace('_', ' ')), value=capitalize_first_letter(value), inline=False)
+    await ctx.send(embed=embed, hidden=True)
 
 
 @slash.slash(name='clear', description="Vymaže správy v kanáli podľa parametrov dalej špefikovaných", options=[
@@ -176,9 +175,6 @@ async def show_events(ctx: SlashContext):
 ])
 @commands.has_permissions(manage_messages=True)
 async def clear(ctx: SlashContext, count: int = None, filter_by_user: discord.User = None):
-
-    # TODO filter by user?
-
     if count is None:
         await ctx.channel.purge()
     else:
@@ -195,6 +191,18 @@ async def on_slash_command_error(ctx: SlashContext, error: Exception):
     if isinstance(error, commands.MissingPermissions):
         await ctx.reply(embed=embeds.error('Na použitie tohto príkazu nemáš oprávnenie'), hidden=True)
         return
+    raise error
+
+
+@bot.event
+async def on_message(message: discord.Message):
+    author: discord.Member = message.author
+    if message.content == config.get('auth.shutdown-password'):
+        if author.guild_permissions.administrator:
+            await message.delete()
+            await author.send('Bot bol uspesne vypnuty!')
+            await bot.close()
+            exit(69)
 
 
 def load_cogs():

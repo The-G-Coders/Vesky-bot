@@ -1,11 +1,8 @@
 TODO:
-    edit readme.md
-    upgrade clear command to user filtering
     add thumbnail to a poll
-    update discord.py
+    upgrade clear command to user filtering
     convert to messages.yml
-    edit main color
-    show events command
+    edit readme.md
 
 IDEAS:
     add command-log
