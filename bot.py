@@ -119,10 +119,10 @@ async def role_name(ctx: SlashContext, role, nazov):
 ])
 async def new_event(ctx: SlashContext, name: str, description: str, date: str, time: str = None, ping: discord.Role = None):
     if event_exists(name):
-        used_names=', '.join(used_name for used_name in events.get('events').keys())
+        used_names = ', '.join(used_name for used_name in events.get('events').keys())
         await ctx.reply(embed=embeds.error('Event s takýmto menom uz existuje\n'
-                                            'použité mená:\n'
-                                            f'{used_names}'), hidden=True)
+                                           'použité mená:\n'
+                                           f'{used_names}'), hidden=True)
         return
 
     date_stripped = date.strip()
@@ -131,6 +131,8 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
         await ctx.reply(embed=embeds.error('Neplatný formát dátumu!'), hidden=True)
         return
     date_list = date_stripped.split(get_separator(date_stripped))
+
+    time_list = []
 
     if time is not None:
 
@@ -143,10 +145,10 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
         time_list = time_stripped.split(':')
 
         ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0),
-                                        int(time_list[0]), int(time_list[1]))
+                                      int(time_list[0]), int(time_list[1]))
     else:
         ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10),
-                                        2, 0, 10)
+                                      2, 0, 10)
 
     events.data['events'][name.strip().replace(' ', '_')] = {
         'description': description,
