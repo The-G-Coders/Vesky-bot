@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from lib.embeds import Embeds
-from lib.utils import epoch, seconds_to_time, capitalize_first_letter
+from lib.utils import epoch, is_7210_secs, seconds_to_time, capitalize_first_letter
 from lib.yml import YmlConfig
 
 
@@ -36,10 +36,10 @@ class Tasks(commands.Cog):
             day_before_16_00 = announce_time - announce_time % one_day - one_day + announcement_time
             if abs(day_before_16_00 - epoch()) <= interval_halved:
                 to_announce[name] = data
-                if announce_time % one_day == 10:
+                if is_7210_secs(announce_time):
                     self.delete_event(name)
 
-            elif announce_time % one_day != 10 and abs(announce_time - _5_minutes - epoch()) <= interval_halved:
+            elif not is_7210_secs(announce_time) and abs(announce_time - _5_minutes - epoch()) <= interval_halved:
                 desc = f'{data.get("description")} \n'
                 desc += f'**Čas:** {seconds_to_time(data.get("time"))} \n'
                 eb = self.embeds.default(title=f"O chvíľu začina event...")
@@ -64,7 +64,7 @@ class Tasks(commands.Cog):
                 desc += f'**Ping:** {role.mention}\n'
                 await self.channel.send(role.mention)
             time = data.get('time')
-            if time % one_day != 10:
+            if not is_7210_secs(time):
                 desc += f'**Čas:** {seconds_to_time(time)}'
             eb.add_field(name=capitalize_first_letter(name), value=capitalize_first_letter(desc), inline=False)
         await self.channel.send(embed=eb)

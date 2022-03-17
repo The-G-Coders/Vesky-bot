@@ -139,9 +139,11 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
 
         time_list = time_stripped.split(':')
 
-        ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0))
+        ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0),
+                                        time_list[0], time_list[1])
     else:
-        ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 0, 0, 10))
+        ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10),
+                                        2, 0, 10)
 
     events.data['events'][name.strip().replace(' ', '_')] = {
         'description': description,
@@ -164,7 +166,7 @@ async def show_events(ctx: SlashContext):
         return
     for name, data in sorted_event_dict(temp, key='time'):
         desc = wrap_text(data['description'], 45)
-        if is_10_secs(data['time']):
+        if is_7210_secs(data['time']):
             value = desc + '\n**Dátum:** ' + strftime('%d.%m.%Y', localtime(data['time'] - 3600))
         else:
             value = desc + '\n**Dátum:** ' + strftime('%H:%M:%S %d.%m.%Y', localtime(data['time'] - 3600))

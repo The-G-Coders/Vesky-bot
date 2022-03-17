@@ -46,17 +46,18 @@ def epoch():
     return round(t()) + 3600 * hours_from_utc()
 
 
-def datetime_to_epoch(date: datetime):
+def datetime_to_epoch(date: datetime, hours, minutes, seconds=0):
     """
     Returns the epoch from the datetime object plus one hour
     :param date: a datetime object
     :return the epoch
     """
-    return round(date.timestamp() + 3600 * hours_from_utc())
+    diference = hours*3600 + minutes*60 + seconds - date.timestamp() % 86400
+    return round(date.timestamp() + diference)
 
 
-def is_10_secs(seconds: int):
-    return seconds % 86400 == 10
+def is_7210_secs(seconds: int):
+    return seconds % 86400 == 7210
 
 
 def seconds_to_time(seconds: int):
