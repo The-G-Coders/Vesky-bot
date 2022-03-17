@@ -119,7 +119,10 @@ async def role_name(ctx: SlashContext, role, nazov):
 ])
 async def new_event(ctx: SlashContext, name: str, description: str, date: str, time: str = None, ping: discord.Role = None):
     if event_exists(name):
-        await ctx.reply(embed=embeds.error('Event s takýmto menom uz existuje'), hidden=True)
+        used_names=', '.join(used_name for used_name in events.get('events').keys())
+        await ctx.reply(embed=embeds.error('Event s takýmto menom uz existuje\n'
+                                            'použité mená:\n'
+                                            f'{used_names}'), hidden=True)
         return
 
     date_stripped = date.strip()
@@ -140,7 +143,7 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
         time_list = time_stripped.split(':')
 
         ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0),
-                                        time_list[0], time_list[1])
+                                        int(time_list[0]), int(time_list[1]))
     else:
         ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10),
                                         2, 0, 10)
@@ -148,7 +151,8 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
     events.data['events'][name.strip().replace(' ', '_')] = {
         'description': description,
         'time': ping_time,
-        'role': 'no-role' if ping is None else 'everyone' if ping.name == 'everyone' else ping.id
+        'role': 'no-role' if ping is None else 'everyone' if ping.name == 'everyone' else ping.id,
+        'utc-time': datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0).timestamp() if time is not None else datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10).timestamp()
     }
 
     events.save()
@@ -167,9 +171,9 @@ async def show_events(ctx: SlashContext):
     for name, data in sorted_event_dict(temp, key='time'):
         desc = wrap_text(data['description'], 45)
         if is_7210_secs(data['time']):
-            value = desc + '\n**Dátum:** ' + strftime('%d.%m.%Y', localtime(data['time'] - 3600))
+            value = desc + '\n**Dátum:** ' + strftime('%d.%m.%Y', localtime(data['utc-time']))
         else:
-            value = desc + '\n**Dátum:** ' + strftime('%H:%M:%S %d.%m.%Y', localtime(data['time'] - 3600))
+            value = desc + '\n**Dátum:** ' + strftime('%H:%M:%S %d.%m.%Y', localtime(data['utc-time']))
         embed.add_field(name=capitalize_first_letter(name.replace('_', ' ')), value=capitalize_first_letter(value), inline=False)
     await ctx.send(embed=embed, hidden=True)
 
