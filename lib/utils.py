@@ -3,6 +3,29 @@ from datetime import datetime
 
 characters = r'!@#$%^&*()-_=+[]{};:"/?.>,<|`~ '
 
+class Infinity:
+
+    def __init__(self) -> None:
+        pass
+    
+    def __eq__(self, cislo):
+        return False
+    
+    __ne__=__eq__
+
+    __lt__=__eq__
+
+    __le__=__eq__
+
+    __ge__=__eq__
+
+    def __gt__(self, cislo):
+        return True
+    
+    def __add__(self, cislo):
+        return Infinity()
+    
+    __radd__=__add__
 
 def epoch():
     """Returns the epoch plus one hour"""
@@ -46,3 +69,21 @@ def capitalize_first_letter(to_capitalize: str):
             new += v
 
     return new
+
+
+def sorted_event_dict(dict: dict, key: str = 'time'):
+
+    sorted_list = []
+    spracovane=[]
+    for i in len(dict):
+        min_name=''
+        min_data=Infinity()
+        for name, data in dict.items():
+            if name not in spracovane and data[key] <= min_data:
+                min_name = name
+                min_data = data[key]
+
+        sorted_list.append( (min_name, dict[min_name]) )
+        spracovane.append(min_name)
+
+    return sorted_list

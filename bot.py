@@ -1,4 +1,5 @@
 import re
+import time
 import discord
 import discord_slash
 from discord import utils
@@ -153,6 +154,20 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
     events.save()
 
     await ctx.reply(embed=embeds.default(title='Udalosť bola úspešne pridaná!'), hidden=True)
+
+
+@slash.slash(name = 'show_events', description = 'zobrazí naplánované udalosti')
+async def show_events(ctx: SlashContext):
+    temp: dict = events.get('events')
+    embed = embeds.default(title='kalendár')
+    for name, data in sorted_event_dict(temp, key = 'time'):
+        if data['time'] % 86400 == 10:
+            value = data['description'] + '\n' + time.strftime('%d-%m-%Y', time.localtime(data['time'] - 3600))
+        else:
+            value = data['description'] + '\n' + time.strftime('%H:%M:%S %d-%m-%Y', time.localtime(data['time'] - 3600))
+        embed.add_field(name=name, value=value)
+    ctx.send(embed=embed, hidden=True)
+
 
 
 @slash.slash(name='clear', description="Vymaže správy v kanáli podľa parametrov dalej špefikovaných", options=[
