@@ -8,7 +8,7 @@ from discord_slash import SlashContext, manage_commands
 from Tasks import Tasks
 from lib.utils import *
 from lib.yml import YmlConfig
-from lib.embeds import Embeds
+from lib.embeds import Embeds, Colors
 from lib.regex import DATE_PATTERN, TIME_PATTERN, get_separator
 
 startup = round(t() * 1000)
@@ -28,7 +28,7 @@ POLL_CHANNEL_ID = config.get('channel-ids.poll')
 GUILD_ID = config.get('auth.debug-guild')
 
 
-slash = discord_slash.SlashCommand(bot, sync_commands=False, debug_guild=GUILD_ID)
+slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=GUILD_ID)
 
 poll_options = [manage_commands.create_option(name='otázka', description='Napíšte otázku', option_type=3, required=True),
                 manage_commands.create_option(name='ping', description='Pingne rolu', option_type=8, required=False)]
@@ -46,7 +46,7 @@ async def on_ready():
 
 @slash.slash(name='poll', description='Vytvorí hlasovanie', options=poll_options)
 async def poll(ctx: SlashContext, **kwargs):
-    embed = discord.Embed(title='Hlasovanie', description='', url='', color=discord.Color.blue())
+    embed = discord.Embed(title='Hlasovanie', description='', url='', color=Colors.MAIN)
     embed.set_author(name=ctx.author.display_name, url='', icon_url=ctx.author.avatar_url)
     embed.set_footer(text=f'{bot.user}', icon_url=bot.user.avatar_url)
     description = ''
@@ -66,7 +66,7 @@ async def poll(ctx: SlashContext, **kwargs):
         message = await channel.send(embed=embed)
         await message.add_reaction(utils.get(ctx.guild.emojis, name='YES'))
         await message.add_reaction(utils.get(ctx.guild.emojis, name='NO'))
-        await ctx.reply(embed=embeds.default(title='Anketa úspešne vytvorená!'))
+        await ctx.reply(embed=embeds.default(title='Anketa úspešne vytvorená!'), hidden=True)
         return
     used_letters = []
     description += f'**{kwargs["otázka"]}**\n\n'

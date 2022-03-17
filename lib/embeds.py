@@ -28,7 +28,7 @@ class Embeds:
 
 
 class Colors:
-    MAIN = from_hex('#e8e8e8')
+    MAIN = from_hex('#f123ff')
     ERROR = from_hex('#c70000')
 
     RED = from_hex('#ff0000')
