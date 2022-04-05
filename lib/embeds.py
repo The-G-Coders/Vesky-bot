@@ -1,6 +1,6 @@
 import discord as ds
-from os import getenv
-from dotenv import load_dotenv
+from os import getenv as env
+from dotenv import load_dotenv as ld
 from discord.ext import commands as cmd
 
 
@@ -11,9 +11,9 @@ def from_hex(hex_str: str):
 class Embeds:
 
     def __init__(self, bot: cmd.Bot):
-        load_dotenv()
+        ld()
         self.bot = bot
-        self.get = getenv
+        self.get = env
 
     def error(self, error: str):
         embed = self.default(title=error, color=from_hex('#c70000'))
