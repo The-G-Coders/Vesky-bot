@@ -1,3 +1,4 @@
+import os
 import re
 import discord
 import discord_slash
@@ -17,6 +18,8 @@ env_path = getenv("ENV_FILE")
 
 startup = round(t() * 1000)
 print('Starting up')
+
+print('Current working directory: ' + os.getcwd())
 
 if env_path is not None:
     load_dotenv(dotenv_path=env_path)
