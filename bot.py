@@ -1,31 +1,46 @@
 import re
 import discord
 import discord_slash
+from os import getenv
 from discord import utils
 from discord.ext import commands
+from dotenv import load_dotenv
 from time import strftime, localtime
 from discord_slash import SlashContext, manage_commands
-from Tasks import Tasks
 from lib.utils import *
 from lib.embeds import *
 from lib.yml import YmlConfig
+from Tasks import EventAnnouncementTask
 from lib.regex import DATE_PATTERN, TIME_PATTERN, get_separator
+
+env_path = getenv("ENV_FILE")
 
 startup = round(t() * 1000)
 print('Starting up')
 
+if env_path is not None:
+    load_dotenv(dotenv_path=env_path)
+    print(f'Loaded .env at {env_path}')
+elif env_path is None and getenv("TOKEN") is None:
+    print('The required environment variables are not loaded.')
+    print('You can find the required variables at https://github.com/The-G-Coders/Vesky-bot/blob/master/README.md')
+    print('Exiting...')
+    exit(1)
+else:
+    print('Proceeding with loaded environment variables')
+
+
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.default())
 
-config = YmlConfig('resources/config.yml')
 events = YmlConfig('resources/events.yml')
 
 embeds = Embeds(bot)
 
-TOKEN = config.get('auth.token')
+TOKEN = getenv('TOKEN')
 ALPHABET = 'abcdefghijklmnoprstuvyz'
 ALPHABET_REACTIONS = '🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇷🇸🇹🇺🇻🇾🇿'
-POLL_CHANNEL_ID = config.get('channel-ids.poll')
-GUILD_ID = config.get('auth.debug-guild')
+POLL_CHANNEL_ID = int(getenv('POLL_CHANNEL_ID'))
+GUILD_ID = int(getenv('DEBUG_GUILD_ID'))
 
 slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=GUILD_ID)
 
@@ -132,8 +147,6 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
         return
     date_list = date_stripped.split(get_separator(date_stripped))
 
-    time_list = []
-
     if time is not None:
 
         time_stripped = time.strip()
@@ -144,17 +157,17 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
 
         time_list = time_stripped.split(':')
 
-        ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0),
-                                      int(time_list[0]), int(time_list[1]))
+        ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0), int(time_list[0]),
+                                      int(time_list[1]))
     else:
-        ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10),
-                                      2, 0, 10)
+        ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10), 2, 0, 10)
 
     events.data['events'][name.strip().replace(' ', '_')] = {
         'description': description,
         'time': ping_time,
         'role': 'no-role' if ping is None else 'everyone' if ping.name == 'everyone' else ping.id,
-        'utc-time': datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0).timestamp() if time is not None else datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10).timestamp()
+        'utc-time': datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0).timestamp() if time is not None else datetime(
+            int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10).timestamp()
     }
 
     events.save()
@@ -197,7 +210,7 @@ async def clear(ctx: SlashContext, count: int):
 
 @slash.slash(name='help', description='Vypíše všetky príkazy')
 async def help(ctx: SlashContext):
-    category_id = config.get('category-ids.bot')
+    category_id = int(getenv('BOT_CATEGORY_ID'))
     if ctx.channel.category_id != category_id:
         await ctx.reply(embed=embeds.error(f"Tento command môžeš použiť len v {utils.get(bot.get_guild(GUILD_ID).categories, id=category_id).name} kategórii"), hidden=True)
         return
@@ -224,7 +237,7 @@ async def on_slash_command_error(ctx: SlashContext, error: Exception):
 @bot.event
 async def on_message(message: discord.Message):
     author: discord.Member = message.author
-    if message.content == config.get('auth.shutdown-password'):
+    if message.content == getenv('SHUTDOWN_PASSWORD'):
         if author.guild_permissions.administrator:
             await message.delete()
             await author.send('Bot bol uspesne vypnuty a jeho vypnutie zaznamenané!')
@@ -235,7 +248,7 @@ async def on_message(message: discord.Message):
 
 
 def load_cogs():
-    bot.add_cog(Tasks(bot))
+    bot.add_cog(EventAnnouncementTask(bot))
 
 
 def event_exists(name: str):
