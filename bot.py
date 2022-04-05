@@ -236,6 +236,7 @@ async def help(ctx: SlashContext):
     desc.add_command('poll', 'Vytvorí hlasovanie')
     desc.add_command('new_event', 'Pridá udalosť do kalendára')
     desc.add_command('show_events', 'Zobrazí naplánované udalosti')
+    desc.add_command("delete-event", "Zmaže udalosť z kalendára")
     desc.add_break('> **:warning: Obmedzenie:** Funkcie vyhradené len pre ľudí s oprávnením')
     desc.add_command('clear', 'Vymaže správy v kanáli')
     desc.add_command('role-color', 'Zmení farbu role')
