@@ -7,7 +7,7 @@ from lib.utils import epoch, is_7210_secs, seconds_to_time, capitalize_first_let
 from lib.yml import YmlConfig
 
 
-class Task(commands.Cog):
+class EventAnnouncementTask(commands.Cog):
     interval = 60
 
     def __init__(self, bot: commands.Bot):

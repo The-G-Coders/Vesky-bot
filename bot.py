@@ -10,7 +10,7 @@ from discord_slash import SlashContext, manage_commands
 from lib.utils import *
 from lib.embeds import *
 from lib.yml import YmlConfig
-from AnnouncementTask import Task
+from Tasks import EventAnnouncementTask
 from lib.regex import DATE_PATTERN, TIME_PATTERN, get_separator
 
 startup = round(t() * 1000)
@@ -236,7 +236,7 @@ async def on_message(message: discord.Message):
 
 
 def load_cogs():
-    bot.add_cog(Task(bot))
+    bot.add_cog(EventAnnouncementTask(bot))
 
 
 def event_exists(name: str):
