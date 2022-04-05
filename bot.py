@@ -13,10 +13,22 @@ from lib.yml import YmlConfig
 from Tasks import EventAnnouncementTask
 from lib.regex import DATE_PATTERN, TIME_PATTERN, get_separator
 
+env_path = getenv("ENV_FILE")
+
 startup = round(t() * 1000)
 print('Starting up')
 
-load_dotenv(dotenv_path='resources/.env.demizonserver')
+if env_path is not None:
+    load_dotenv(dotenv_path=env_path)
+    print(f'Loaded .env at {env_path}')
+elif env_path is None and getenv("TOKEN") is None:
+    print('The required environment variables are not loaded.')
+    print('You can find the required variables at https://github.com/The-G-Coders/Vesky-bot/blob/master/README.md')
+    print('Exiting...')
+    exit(1)
+else:
+    print('Proceeding with loaded environment variables')
+
 
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.default())
 
