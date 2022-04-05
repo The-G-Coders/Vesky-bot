@@ -1,6 +1,9 @@
+import discord
 from textwrap import wrap
 from time import time as t
 from datetime import datetime
+from os import getenv as env
+from dotenv import load_dotenv as load
 
 characters = r'!@#$%^&*()-_=+[]{};:"/?.>,<|`~ '
 
@@ -47,13 +50,8 @@ def epoch():
 
 
 def datetime_to_epoch(date: datetime, hours, minutes, seconds=0):
-    """
-    Returns the epoch from the datetime object plus one hour
-    :param date: a datetime object
-    :return the epoch
-    """
-    diference = hours*3600 + minutes*60 + seconds - date.timestamp() % 86400
-    return round(date.timestamp() + diference)
+    difference = hours * 3600 + minutes * 60 + seconds - date.timestamp() % 86400
+    return round(date.timestamp() + difference)
 
 
 def is_7210_secs(seconds: int):
@@ -122,3 +120,36 @@ def wrap_text(text: str, count: int):
     """
     split = wrap(text, count)
     return '\n'.join(split)
+
+
+def init_env():
+    """
+    Loads the environment variables based on the env_file passed
+    """
+    env_file = env('ENV_FILE')
+
+    if env_file is not None:
+        load(dotenv_path=env_file)
+        print(f'Loaded .env at {env_file}')
+    elif env_file is None and env("TOKEN") is None:
+        print('The required environment variables are not loaded.')
+        print('You can find the required variables at https://github.com/The-G-Coders/Vesky-bot/blob/master/README.md')
+        print('Exiting...')
+        exit(1)
+    else:
+        print('Proceeding with loaded environment variables')
+
+
+def intents():
+    temp = discord.Intents.default()
+    temp.members = True
+    return temp
+
+
+def slowmode_to_list(data, ctx):
+    users_list = []
+    users_list.append(f'**Interval:** {data["interval"]} minút')
+    users_list.append(f'**Trvanie:** {data["duration"]} hodín')
+    users_list.append(f'**Dôvod:** {data["reason"]}') if data["reason"] is not None else users_list.append(f'**Dôvod:** Nie je nastavený')
+    users_list.append(f'**Kanál:** #{discord.utils.get(ctx.guild.channels, id=data["channel_id"])}') if data["channel_id"] is not None else users_list.append(f'**Kanál:** Celý server')
+    return users_list

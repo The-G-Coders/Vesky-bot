@@ -15,9 +15,8 @@ class Embeds:
         self.bot = bot
         self.get = env
 
-    def error(self, error: str):
-        embed = self.default(title=error, color=from_hex('#c70000'))
-        return embed
+    def error(self, title: str, desc: str = None):
+        return self.default(title=title, desc=desc, color=Colors.ERROR)
 
     def default(self, desc: str = None, title: str = None, thumbnail: str = None, color: ds.Colour = None):
         eb = ds.Embed(color=Colors.MAIN if color is None else color)

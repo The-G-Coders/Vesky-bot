@@ -1,10 +1,10 @@
 import discord
 from os import getenv
 from dotenv import load_dotenv
+from pymongo import MongoClient
 from discord.ext import commands, tasks
 from lib.embeds import Embeds
 from lib.utils import epoch, is_7210_secs, seconds_to_time
-from lib.yml import YmlConfig
 
 
 class EventAnnouncementTask(commands.Cog):
@@ -15,49 +15,48 @@ class EventAnnouncementTask(commands.Cog):
         self.channel = None
         self.bot = bot
         self.embeds = Embeds(bot)
-        self.events = YmlConfig('resources/events.yml')
         self.announce_event.start()
+        self.events_db = MongoClient(getenv("DATABASE_URL"))[getenv('DATABASE_NAME')]["events"]
 
     def cog_unload(self):
         self.announce_event.cancel()
 
     @tasks.loop(seconds=interval)
     async def announce_event(self):
-        self.events = YmlConfig('resources/events.yml')
-        temp: dict = self.events.get('events')
+        events: list = list(self.events_db.find({}))
         _5_minutes = 300
         announcement_time = 57600  # 16h atm
         one_day = 86400
         interval_halved = self.interval / 2
         to_announce: dict = {}
-        for name, data in temp.items():
-            announce_time = data['time']
+        for event in events:
+            announce_time = event['time']
             if announce_time - epoch() < -interval_halved:
-                self.delete_event(name)
+                self.delete_event(event['name'])
                 continue
             day_before_16_00 = announce_time - announce_time % one_day - one_day + announcement_time
             if abs(day_before_16_00 - epoch()) <= interval_halved:
-                to_announce[name] = data
+                to_announce[event['name']] = event
                 if is_7210_secs(announce_time):
-                    self.delete_event(name)
+                    self.delete_event(event['name'])
 
             elif not is_7210_secs(announce_time) and abs(announce_time - _5_minutes - epoch()) <= interval_halved:
-                desc = f'{data.get("description")} \n'
-                desc += f'**Čas:** {seconds_to_time(data.get("time"))} \n'
+                desc = f'{event.get("description")} \n'
+                desc += f'**Čas:** {seconds_to_time(event.get("time"))} \n'
                 eb = self.embeds.default(title=f"O chvíľu začina event...")
-                eb.add_field(name=name.replace('_', ' '), value=desc, inline=False)
-                role = data.get('role')
+                eb.add_field(name=event['name'].replace('_', ' '), value=desc, inline=False)
+                role = event.get('role')
                 ping = '@everyone' if role == 'everyone' else self.bot.get_guild(int(getenv("DEBUG_GUILD_ID"))).get_role(role).mention if role != 'no-role' else None
                 if ping is not None:
                     await self.channel.send(ping)
                 await self.channel.send(embed=eb)
-                self.delete_event(name)
+                self.delete_event(event['name'])
         if len(to_announce) == 0:
             return
         eb = self.embeds.default(title="Oznam eventov na zajtra")
-        for name, data in to_announce.items():
-            desc = data.get('description') + '\n'
-            value = data.get('role')
+        for name, event in to_announce.items():
+            desc = event.get('description') + '\n'
+            value = event.get('role')
             role: discord.Role = self.bot.get_guild(int(getenv("DEBUG_GUILD_ID"))).get_role(value)
             if value == 'everyone':
                 desc += '**Ping:** @everyone\n'
@@ -65,20 +64,14 @@ class EventAnnouncementTask(commands.Cog):
             elif role is not None:
                 desc += f'**Ping:** {role.mention}\n'
                 await self.channel.send(role.mention)
-            time = data.get('time')
+            time = event.get('time')
             if not is_7210_secs(time):
                 desc += f'**Čas:** {seconds_to_time(time)}'
             eb.add_field(name=name, value=desc, inline=False)
         await self.channel.send(embed=eb)
 
     def delete_event(self, name: str):
-        temp_data = {
-            'events': {}
-        }
-        for event_name, event in self.events.get('events').items():
-            if event_name != name:
-                temp_data['events'][event_name] = event
-        self.events.overwrite(temp_data)
+        self.events_db.delete_one({'name': name})
 
     @announce_event.before_loop
     async def before_announce_event(self):
