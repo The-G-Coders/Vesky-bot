@@ -1,6 +1,7 @@
 import discord as ds
+from os import getenv
+from dotenv import load_dotenv
 from discord.ext import commands as cmd
-from lib.yml import YmlConfig as Yml
 
 
 def from_hex(hex_str: str):
@@ -10,7 +11,9 @@ def from_hex(hex_str: str):
 class Embeds:
 
     def __init__(self, bot: cmd.Bot):
+        load_dotenv()
         self.bot = bot
+        self.get = getenv
 
     def error(self, error: str):
         embed = self.default(title=error, color=from_hex('#c70000'))
@@ -24,7 +27,7 @@ class Embeds:
             eb.title = title
         if thumbnail is not None:
             eb.set_thumbnail(url=thumbnail)
-        guild: ds.Guild = self.bot.get_guild(Yml('resources/config.yml').get('auth.debug-guild'))
+        guild: ds.Guild = self.bot.get_guild(int(self.get('DEBUG_GUILD_ID')))
         me: ds.Member = guild.me
         name = me.display_name if me is not None else self.bot.user
         eb.set_footer(text=name, icon_url=self.bot.user.avatar_url)
