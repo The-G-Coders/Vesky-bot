@@ -3,7 +3,7 @@ from os import getenv
 from dotenv import load_dotenv
 from discord.ext import commands, tasks
 from lib.embeds import Embeds
-from lib.utils import epoch, is_7210_secs, seconds_to_time, capitalize_first_letter
+from lib.utils import epoch, is_7210_secs, seconds_to_time
 from lib.yml import YmlConfig
 
 
@@ -45,7 +45,7 @@ class EventAnnouncementTask(commands.Cog):
                 desc = f'{data.get("description")} \n'
                 desc += f'**Čas:** {seconds_to_time(data.get("time"))} \n'
                 eb = self.embeds.default(title=f"O chvíľu začina event...")
-                eb.add_field(name=capitalize_first_letter(name.replace('_', ' ')), value=desc, inline=False)
+                eb.add_field(name=name.replace('_', ' '), value=desc, inline=False)
                 role = data.get('role')
                 ping = '@everyone' if role == 'everyone' else self.bot.get_guild(int(getenv("DEBUG_GUILD_ID"))).get_role(role).mention if role != 'no-role' else None
                 if ping is not None:
@@ -68,7 +68,7 @@ class EventAnnouncementTask(commands.Cog):
             time = data.get('time')
             if not is_7210_secs(time):
                 desc += f'**Čas:** {seconds_to_time(time)}'
-            eb.add_field(name=capitalize_first_letter(name), value=capitalize_first_letter(desc), inline=False)
+            eb.add_field(name=name, value=desc, inline=False)
         await self.channel.send(embed=eb)
 
     def delete_event(self, name: str):
