@@ -29,7 +29,6 @@ elif env_path is None and getenv("TOKEN") is None:
 else:
     print('Proceeding with loaded environment variables')
 
-
 bot = commands.Bot(command_prefix='!', intents=discord.Intents.default())
 
 events = YmlConfig('resources/events.yml')
@@ -162,8 +161,9 @@ async def new_event(ctx: SlashContext, name: str, description: str, date: str, t
     else:
         ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10), 2, 0, 10)
 
-    events.data['events'][name.strip().replace(' ', '_')] = {
-        'description': description,
+    events.data['events'][capitalize_first_letter(name.strip().replace(' ', '_'))] = {
+        'author_id': ctx.author.id,
+        'description': capitalize_first_letter(description),
         'time': ping_time,
         'role': 'no-role' if ping is None else 'everyone' if ping.name == 'everyone' else ping.id,
         'utc-time': datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time_list[0]), int(time_list[1]), 0).timestamp() if time is not None else datetime(
@@ -191,6 +191,24 @@ async def show_events(ctx: SlashContext):
             value = desc + '\n**Dátum:** ' + strftime('%H:%M:%S %d.%m.%Y', localtime(data['utc-time']))
         embed.add_field(name=capitalize_first_letter(name.replace('_', ' ')), value=capitalize_first_letter(value), inline=False)
     await ctx.send(embed=embed, hidden=True)
+
+
+@slash.slash(name='delete-event', description='Zmaže udalosť z kalendára', options=[
+    manage_commands.create_option(name='name', description='Názov udalosti', option_type=3, required=True)
+])
+async def delete_event(ctx: SlashContext, name: str):
+    if not event_exists(name):
+        await ctx.reply(embed=embeds.error('Event s takýmto menom neexistuje'), hidden=True)
+        return
+
+    if not ctx.author.guild_permissions.administrator and ctx.author.id != events.get('events')[name]['author_id']:
+        await ctx.reply(embed=embeds.error('Nemáš práva na zmazanie tejto udalosti'), hidden=True)
+        return
+
+    del events.data['events'][name.strip().replace(' ', '_')]
+    events.save()
+
+    await ctx.reply(embed=embeds.default(title='Udalosť bola úspešne zmazaná!'), hidden=True)
 
 
 @slash.slash(name='clear', description="Vymaže správy v kanáli", options=[
