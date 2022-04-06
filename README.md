@@ -13,4 +13,4 @@
 
 #### OR
 
-- **ENV_FILE** (Path to a file containing the required environment variables)
+- **ENV_FILE** - Path to a file containing the required environment variables
