@@ -1,4 +1,8 @@
-FROM python:3.9-slim-buster
+FROM python:3.9-alpine3.15
+
+# set time-zone
+ENV TZ="Europe/Bratislava"
+
 # setup the workdir
 WORKDIR /app
 
