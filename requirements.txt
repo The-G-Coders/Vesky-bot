@@ -1,4 +1,3 @@
 discord.py
-PyYAML~=6.0
 discord-py-slash-command
 python-dotenv~=0.19.2
