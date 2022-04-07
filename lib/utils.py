@@ -5,6 +5,8 @@ from datetime import datetime
 from os import getenv as env
 from dotenv import load_dotenv as load
 
+REQUIRED_ENV = ['TOKEN', 'DATABASE_URL', 'DATABASE', 'SHUTDOWN_PASSWORD0', 'DEBUG_GUILD_ID', 'POLL_CHANNEL_ID', 'ANNOUNCEMENTS_CHANNEL_ID', 'BOT_CATEGORY_ID', 'EVENTS', 'SLOWMODE', 'POLLS', "UTILS"]
+
 
 class Infinity:
 
@@ -114,12 +116,19 @@ def init_env():
     """
     Loads the environment variables based on the env_file passed
     """
+
+    def all_env_loaded():
+        for env_var in REQUIRED_ENV:
+            if env(env_var) is None:
+                return False
+        return True
+
     env_file = env('ENV_FILE')
 
     if env_file is not None:
         load(dotenv_path=env_file)
         print(f'Loaded .env file at "{env_file}"')
-    if env("TOKEN") is None:
+    if not all_env_loaded():
         print('The required environment variables are not loaded.')
         print('You can find the required variables at https://github.com/The-G-Coders/Vesky-bot/blob/master/README.md')
         print('Exiting...')

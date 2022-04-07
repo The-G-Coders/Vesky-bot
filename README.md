@@ -11,6 +11,13 @@
 - **ANNOUNCEMENTS_CHANNEL_ID** - The channel ID of the channel to use for announcements  
 - **BOT_CATEGORY_ID** - The category ID of the category to use for the bot commands
 
+##### Boolean values, set to `true` or `anything else but null`
+
+- **EVENTS** - Whether to load the events module
+- **SLOWMODE** - Whether to load the slowmode module
+- **POLLS** - Whether to load the polls module
+- **UTILS** - Whether to load the utils module
+
 #### OR
 
 - **ENV_FILE** - Path to a file containing the required environment variables
