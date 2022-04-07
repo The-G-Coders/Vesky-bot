@@ -1,8 +1,6 @@
 TODO:
     per user slow-mode
     event without time deleting after announcement(should be the next day)
-    convert to messages.yml
-    edit readme.md
 
 IDEAS:
     upgrade clear command to user filtering

@@ -4,10 +4,9 @@ from dotenv import load_dotenv
 from discord.ext import commands
 import discord_slash
 
-from lib.yml import YmlConfig
+import lib.utils
 
-load_dotenv()
-
+lib.utils.init_env()
 TOKEN = getenv('TOKEN')
 GUILD_ID = int(getenv('DEBUG_GUILD_ID'))
 

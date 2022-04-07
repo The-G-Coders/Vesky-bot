@@ -1,8 +1,11 @@
+import discord
 from textwrap import wrap
 from time import time as t
 from datetime import datetime
+from os import getenv as env
+from dotenv import load_dotenv as load
 
-characters = r'!@#$%^&*()-_=+[]{};:"/?.>,<|`~ '
+REQUIRED_ENV = ['TOKEN', 'DATABASE_URL', 'DATABASE', 'SHUTDOWN_PASSWORD0', 'DEBUG_GUILD_ID', 'POLL_CHANNEL_ID', 'ANNOUNCEMENTS_CHANNEL_ID', 'BOT_CATEGORY_ID', 'EVENTS', 'SLOWMODE', 'POLLS', "UTILS"]
 
 
 class Infinity:
@@ -42,18 +45,13 @@ def hours_from_utc():
 
 
 def epoch():
-    """Returns the epoch plus one hour"""
+    """Returns the epoch based on the current timezone"""
     return round(t()) + 3600 * hours_from_utc()
 
 
 def datetime_to_epoch(date: datetime, hours, minutes, seconds=0):
-    """
-    Returns the epoch from the datetime object plus one hour
-    :param date: a datetime object
-    :return the epoch
-    """
-    diference = hours*3600 + minutes*60 + seconds - date.timestamp() % 86400
-    return round(date.timestamp() + diference)
+    difference = hours * 3600 + minutes * 60 + seconds - date.timestamp() % 86400
+    return round(date.timestamp() + difference)
 
 
 def is_7210_secs(seconds: int):
@@ -78,37 +76,27 @@ def capitalize_first_letter(to_capitalize: str):
     :param to_capitalize: the string to capitalize
     :return: the capitalized string
     """
-    new = ''
-    index = 0
-    for v in to_capitalize:
-        if index == 0 and v not in characters:
-            new += v.upper()
-            index = 1
-        else:
-            new += v
-
-    return new
+    return to_capitalize[0].upper() + to_capitalize[1:]
 
 
-def sorted_event_dict(dictionary: dict, key: str = 'time'):
+def sorted_event_list(event_list: list, key: str = 'time'):
     """
-    Sorts an event dictionary by dates
-    :param dictionary: the dictionary to sort
+    Sorts an event list by dates
+    :param event_list: the event list to sort
     :param key: the key of the event field
-    :return: the sorted dict
+    :return: the sorted event list
     """
     sorted_list = []
-    processed = []
-    for i in range(len(dictionary)):
-        min_name = ''
+    for i in range(len(event_list)):
         min_data = Infinity()
-        for name, data in dictionary.items():
-            if name not in processed and data[key] <= min_data:
-                min_name = name
+        min_index = 0
+        for index, data in enumerate(event_list):
+            if data[key] <= min_data:
                 min_data = data[key]
+                min_index = index
 
-        sorted_list.append((min_name, dictionary[min_name]))
-        processed.append(min_name)
+        sorted_list.append(event_list[min_index])
+        del event_list[min_index]
 
     return sorted_list
 
@@ -122,3 +110,34 @@ def wrap_text(text: str, count: int):
     """
     split = wrap(text, count)
     return '\n'.join(split)
+
+
+def init_env():
+    """
+    Loads the environment variables based on the env_file passed
+    """
+
+    def all_env_loaded():
+        for env_var in REQUIRED_ENV:
+            if env(env_var) is None:
+                return False
+        return True
+
+    env_file = env('ENV_FILE')
+
+    if env_file is not None:
+        load(dotenv_path=env_file)
+        print(f'Loaded .env file at "{env_file}"')
+    if not all_env_loaded():
+        print('The required environment variables are not loaded.')
+        print('You can find the required variables at https://github.com/The-G-Coders/Vesky-bot/blob/master/README.md')
+        print('Exiting...')
+        exit(1)
+    else:
+        print('Environment variables loaded correctly.')
+
+
+def intents():
+    temp = discord.Intents.default()
+    temp.members = True
+    return temp
