@@ -12,7 +12,7 @@ from Tasks import EventAnnouncementTask
 from discord_slash import SlashContext, manage_commands
 from lib.embeds import Embeds, CommandDescription, from_hex
 from lib.regex import DATE_PATTERN, TIME_PATTERN, get_separator
-from lib.utils import init_env, datetime_to_epoch, capitalize_first_letter, wrap_text, is_7210_secs, intents, slowmode_to_list, epoch
+from lib.utils import init_env, datetime_to_epoch, capitalize_first_letter, wrap_text, is_7210_secs, intents, slowmode_to_list, epoch, sorted_event_list
 
 startup = round(t() * 1000)
 print('Starting up')
@@ -250,7 +250,7 @@ async def show_events(ctx: SlashContext):
         embed.description = "**Kalendár je prázdny...**"
         await ctx.reply(embed=embed, hidden=True)
         return
-    for event in temp:
+    for event in sorted_event_list(temp, key='time'):
         desc = wrap_text(event['description'], 45)
         if is_7210_secs(event['time']):
             value = desc + '\n**Dátum:** ' + strftime('%d.%m.%Y', localtime(event['utc-time']))

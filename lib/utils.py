@@ -88,26 +88,24 @@ def capitalize_first_letter(to_capitalize: str):
     return new
 
 
-def sorted_event_dict(dictionary: dict, key: str = 'time'):
+def sorted_event_list(event_list: list, key: str = 'time'):
     """
-    Sorts an event dictionary by dates
-    :param dictionary: the dictionary to sort
+    Sorts an event list by dates
+    :param event_list: the event list to sort
     :param key: the key of the event field
-    :return: the sorted dict
+    :return: the sorted event list
     """
     sorted_list = []
-    processed = []
-    for i in range(len(dictionary)):
-        min_name = ''
+    for i in range(len(event_list)):
         min_data = Infinity()
-        for name, data in dictionary.items():
-            if name not in processed and data[key] <= min_data:
-                min_name = name
+        for index, data in enumerate(event_list):
+            if data[key] <= min_data:
                 min_data = data[key]
+                min_index = index
 
-        sorted_list.append((min_name, dictionary[min_name]))
-        processed.append(min_name)
-
+        sorted_list.append(event_list[min_index])
+        del event_list[min_index]
+        
     return sorted_list
 
 
