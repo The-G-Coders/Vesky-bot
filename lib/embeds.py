@@ -18,7 +18,7 @@ class Embeds:
     def error(self, title: str, desc: str = None):
         return self.default(title=title, desc=desc, color=Colors.ERROR)
 
-    def default(self, desc: str = None, title: str = None, thumbnail: str = None, color: ds.Colour = None):
+    def default(self, title: str = None, desc: str = None, thumbnail: str = None, color: ds.Colour = None):
         eb = ds.Embed(color=Colors.MAIN if color is None else color)
         if desc is not None:
             eb.description = desc
@@ -35,7 +35,7 @@ class Embeds:
 
 class Colors:
     MAIN = from_hex('#e8e8e8')
-    ERROR = from_hex('#c70000')
+    ERROR = from_hex('#cc4b3d')
 
     RED = from_hex('#ff0000')
     BLUE = from_hex('#ff0000')

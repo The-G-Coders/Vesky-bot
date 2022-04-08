@@ -5,7 +5,7 @@ from datetime import datetime
 from os import getenv as env
 from dotenv import load_dotenv as load
 
-characters = r'!@#$%^&*()-_=+[]{};:"/?.>,<|`~ '
+REQUIRED_ENV = ['TOKEN', 'DATABASE_URL', 'DATABASE_NAME', 'SHUTDOWN_PASSWORD', 'DEBUG_GUILD_ID', 'POLL_CHANNEL_ID', 'ANNOUNCEMENTS_CHANNEL_ID', 'BOT_CATEGORY_ID', 'EVENTS', 'SLOWMODE', 'POLLS', "UTILS"]
 
 
 class Infinity:
@@ -45,7 +45,7 @@ def hours_from_utc():
 
 
 def epoch():
-    """Returns the epoch plus one hour"""
+    """Returns the epoch based on the current timezone"""
     return round(t()) + 3600 * hours_from_utc()
 
 
@@ -76,16 +76,7 @@ def capitalize_first_letter(to_capitalize: str):
     :param to_capitalize: the string to capitalize
     :return: the capitalized string
     """
-    new = ''
-    index = 0
-    for v in to_capitalize:
-        if index == 0 and v not in characters:
-            new += v.upper()
-            index = 1
-        else:
-            new += v
-
-    return new
+    return to_capitalize[0].upper() + to_capitalize[1:]
 
 
 def sorted_event_list(event_list: list, key: str = 'time'):
@@ -98,6 +89,7 @@ def sorted_event_list(event_list: list, key: str = 'time'):
     sorted_list = []
     for i in range(len(event_list)):
         min_data = Infinity()
+        min_index = 0
         for index, data in enumerate(event_list):
             if data[key] <= min_data:
                 min_data = data[key]
@@ -105,7 +97,6 @@ def sorted_event_list(event_list: list, key: str = 'time'):
 
         sorted_list.append(event_list[min_index])
         del event_list[min_index]
-        
     return sorted_list
 
 
@@ -124,30 +115,28 @@ def init_env():
     """
     Loads the environment variables based on the env_file passed
     """
+
+    def all_env_loaded():
+        for env_var in REQUIRED_ENV:
+            if env(env_var) is None:
+                return False
+        return True
+
     env_file = env('ENV_FILE')
 
     if env_file is not None:
         load(dotenv_path=env_file)
-        print(f'Loaded .env at {env_file}')
-    elif env_file is None and env("TOKEN") is None:
+        print(f'Loaded .env file at "{env_file}"')
+    if not all_env_loaded():
         print('The required environment variables are not loaded.')
         print('You can find the required variables at https://github.com/The-G-Coders/Vesky-bot/blob/master/README.md')
         print('Exiting...')
         exit(1)
     else:
-        print('Proceeding with loaded environment variables')
+        print('Environment variables loaded correctly.')
 
 
 def intents():
     temp = discord.Intents.default()
     temp.members = True
     return temp
-
-
-def slowmode_to_list(data, ctx):
-    users_list = []
-    users_list.append(f'**Interval:** {data["interval"]} minút')
-    users_list.append(f'**Trvanie:** {data["duration"]} hodín')
-    users_list.append(f'**Dôvod:** {data["reason"]}') if data["reason"] is not None else users_list.append(f'**Dôvod:** Nie je nastavený')
-    users_list.append(f'**Kanál:** #{discord.utils.get(ctx.guild.channels, id=data["channel_id"])}') if data["channel_id"] is not None else users_list.append(f'**Kanál:** Celý server')
-    return users_list
