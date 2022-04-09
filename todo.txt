@@ -1,4 +1,5 @@
 TODO:
+    Display time units correctly in slowmode statuses
     Fix notifying user when he gets slowmode
     per user slow-mode
     event without time deleting after announcement(should be the next day)
