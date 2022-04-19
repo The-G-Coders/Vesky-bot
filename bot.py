@@ -7,7 +7,7 @@ from discord import utils
 from datetime import datetime
 from discord.ext import commands
 from discord_slash import SlashContext
-from lib.model import Database
+from lib.database import Database
 from lib.utils import init_env, intents
 from lib.embeds import Embeds, CommandDescription
 

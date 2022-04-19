@@ -5,7 +5,8 @@ from time import strftime, localtime
 from discord.ext import commands, tasks
 from discord_slash import SlashCommand, SlashContext, manage_commands
 from lib.embeds import Embeds
-from lib.model import Database
+from lib.model import Event
+from lib.database import Database
 from lib.regex import DATE_PATTERN, TIME_PATTERN, get_separator
 from lib.utils import datetime_to_epoch, capitalize_first_letter, is_7210_secs, wrap_text, epoch, seconds_to_time
 
@@ -54,14 +55,15 @@ class EventCommands(commands.Cog):
             else:
                 ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10), 2, 0, 10)
 
-            db.events.insert_one({
+            event: Event = {
                 'name': name.strip().replace(' ', '_'),
                 'author_id': ctx.author.id,
                 'description': capitalize_first_letter(description),
                 'time': ping_time,
                 'role': 'no-role' if ping is None else 'everyone' if ping.name == 'everyone' else ping.id,
-                'utc-time': datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10).timestamp() if time is None else datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time.strip().split(':')[0]), int(time.strip().split(':')[1]), 0).timestamp()
-            })
+                'utc_time': datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10).timestamp() if time is None else datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), int(time.strip().split(':')[0]), int(time.strip().split(':')[1]), 0).timestamp()
+            }
+            db.events.insert_one(event)
 
             await ctx.reply(embed=embeds.default(title='Udalosť bola úspešne pridaná!'), hidden=True)
 
@@ -100,9 +102,9 @@ class EventCommands(commands.Cog):
             for event in temp:
                 desc = wrap_text(event['description'], 45)
                 if is_7210_secs(event['time']):
-                    value = desc + '\n**Dátum:** ' + strftime('%d.%m.%Y', localtime(event['utc-time']))
+                    value = desc + '\n**Dátum:** ' + strftime('%d.%m.%Y', localtime(event['utc_time']))
                 else:
-                    value = desc + '\n**Dátum:** ' + strftime('%H:%M:%S %d.%m.%Y', localtime(event['utc-time']))
+                    value = desc + '\n**Dátum:** ' + strftime('%H:%M:%S %d.%m.%Y', localtime(event['utc_time']))
                 embed.add_field(name=event['name'].replace('_', ' '), value=value, inline=False)
             await ctx.reply(embed=embed, hidden=True)
 
