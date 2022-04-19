@@ -138,8 +138,6 @@ class EventAnnouncementTask(commands.Cog):
             day_before_16_00 = announce_time - announce_time % one_day - one_day + announcement_time
             if abs(day_before_16_00 - epoch()) <= interval_halved:
                 to_announce[event['name']] = event
-                if is_7210_secs(announce_time):
-                    self.delete_event(event['name'])
 
             elif not is_7210_secs(announce_time) and abs(announce_time - _5_minutes - epoch()) <= interval_halved:
                 desc = f'{event.get("description")} \n'
@@ -152,6 +150,10 @@ class EventAnnouncementTask(commands.Cog):
                     await self.channel.send(ping)
                 await self.channel.send(embed=eb)
                 self.delete_event(event['name'])
+
+            if is_7210_secs(announce_time) and abs(announce_time + one_day - epoch()) <= interval_halved:
+                self.delete_event(event['name'])
+
         if len(to_announce) == 0:
             return
         eb = self.embeds.default(title="Oznam eventov na zajtra")
