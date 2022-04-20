@@ -42,7 +42,7 @@ reg_time = f'^{hours}:{minutes}$'
 
 DATE_PATTERN = re.compile(reg_dates)
 TIME_PATTERN = re.compile(reg_time)
-HEX_COLOR_PATTERN = re.compile('(#[0-9a-fA-F]{6})')
+HEX_COLOR_PATTERN = re.compile('(#[\da-fA-F]{6})')
 
 
 def get_separator(date: str):

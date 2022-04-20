@@ -97,7 +97,6 @@ def sorted_event_list(event_list: list, key: str = 'time'):
 
         sorted_list.append(event_list[min_index])
         del event_list[min_index]
-
     return sorted_list
 
 

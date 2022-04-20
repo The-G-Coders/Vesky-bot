@@ -3,35 +3,39 @@ from time import time
 from datetime import datetime
 from discord.ext import commands, tasks
 from discord_slash import SlashCommand, SlashContext, manage_commands
-from lib.model import Database
 from lib.embeds import Embeds
+from lib.model import SlowmodeType
+from lib.database import Database
 
 
 class Slowmode(commands.Cog):
+    SECONDS = 'sekundy'
+    MINUTES = 'minúty'
+    HOURS = 'hodiny'
 
     def __init__(self, bot: commands.Bot, slash: SlashCommand, db: Database, embeds: Embeds):
 
         self.bot = bot
         self.db = db
         self.embeds = embeds
-        self.last_messages = self.fetch_last_messages()
+        self.last_messages = {}
 
         @slash.subcommand(
             base='slowmode',
             name='create',
             description="Pridá slowmode memberovi",
             options=[
-                manage_commands.create_option(name='user', description='Vyber používateľa ktorého chceš nastaviť rýchlosť', option_type=6, required=True),
-                manage_commands.create_option(name='duration-unit', description='Nastav jednotlu trvania', option_type=str, required=True, choices=[
-                    'sekundy',
-                    'minúty',
-                    'hodiny'
+                manage_commands.create_option(name='user', description='Vyber používateľa ktorému chceš nastaviť slowmode', option_type=6, required=True),
+                manage_commands.create_option(name='duration_unit', description='Nastav jednotlu trvania', option_type=str, required=True, choices=[
+                    self.SECONDS,
+                    self.MINUTES,
+                    self.HOURS
                 ]),
                 manage_commands.create_option(name='duration', description='Nastav trvanie slowmodu v hodinách', option_type=int, required=True),
-                manage_commands.create_option(name='interval-unit', description='Nastav jednotku intervalu', option_type=str, required=True, choices=[
-                    'sekundy',
-                    'minúty',
-                    'hodiny'
+                manage_commands.create_option(name='interval_unit', description='Nastav jednotku intervalu', option_type=str, required=True, choices=[
+                    self.SECONDS,
+                    self.MINUTES,
+                    self.HOURS
                 ]),
                 manage_commands.create_option(name='interval', description='Nastav interval posielania správ v sekundách', option_type=int, required=True),
                 manage_commands.create_option(name='reason', description='Nastav dôvod', option_type=str, required=False),
@@ -44,17 +48,31 @@ class Slowmode(commands.Cog):
                 await ctx.reply(embed=embeds.error('Nemôžeš nastaviť slowmode administrátorovi'), hidden=True)
                 return
 
-            if db.user_has_slowmode(user):
+            slowmode_user = db.slowmode_user(user)
+            if slowmode_user is not None:
                 await ctx.reply(embed=embeds.error(f'{user.mention} už má slowmode'), hidden=True)
                 return
 
-            new_duration = duration if duration_unit == 'sekundy' else duration * 60 if duration_unit == 'minúty' else duration * 3600
-            new_interval = interval if interval_unit == 'sekundy' else interval * 60 if interval_unit == 'minúty' else interval * 3600
+            new_duration = duration if duration_unit == self.SECONDS else duration * 60 if duration_unit == self.MINUTES else duration * 3600
+            new_interval = interval if interval_unit == self.SECONDS else interval * 60 if interval_unit == self.MINUTES else interval * 3600
 
             if reason is not None:
                 await user.send(embed=embeds.default(title='Dostal si slowmode', desc=f'**Dôvod:** {reason}\nPre viac detailov použi **/slowmode status**'))
+            else:
+                await user.send(embed=embeds.default(title='Dostal si slowmode', desc='Pre viac detailov použi **/slowmode status**'))
 
-            db.slowmode.insert_one({'user_id': user.id, 'duration': new_duration, 'interval': new_interval, 'reason': reason, 'channel_id': channel.id if channel is not None else None, "issued_by": f'{ctx.author.mention}', 'issued_at': time()})
+            slowmode: SlowmodeType = {
+                'user_id': user.id,
+                'duration': new_duration,
+                'duration_unit': duration_unit,
+                'interval': new_interval,
+                'interval_unit': interval_unit,
+                'reason': reason,
+                'channel_id': channel.id if channel is not None else None,
+                "issued_by": f'{ctx.author.mention}',
+                'issued_at': time()
+            }
+            db.slowmode.insert_one(slowmode)
 
             await ctx.reply(embed=embeds.default(title=f'Slowmode pre {user.name}#{user.discriminator} bol nastavený'), hidden=True)
 
@@ -67,12 +85,14 @@ class Slowmode(commands.Cog):
             ])
         @commands.has_permissions(administrator=True)
         async def _slowmode_remove(ctx: SlashContext, user: discord.User):
-            if not db.user_has_slowmode(user):
+            slowmode_user = db.slowmode_user(user)
+            if slowmode_user is None:
                 await ctx.reply(embed=embeds.error(f'Používateľ {user.name}#{user.discriminator} nemá nastavený slowmode'), hidden=True)
                 return
 
             db.slowmode.delete_one({'user_id': user.id})
-            del self.last_messages[user.id]
+            if user.id in self.last_messages:
+                del self.last_messages[user.id]
             await ctx.reply(embed=embeds.default(title=f'Slowmode pre {user.name}#{user.discriminator} bol odstránený'), hidden=True)
 
         @slash.subcommand(
@@ -87,8 +107,9 @@ class Slowmode(commands.Cog):
 
             await self.check_slowmode(temp_user)
 
+            slowmode_user = db.slowmode_user(temp_user)
             if ctx.author.guild_permissions.administrator:
-                if not db.user_has_slowmode(temp_user):
+                if slowmode_user is None:
                     if temp_user == ctx.author:
                         await ctx.reply(embed=embeds.default(title=f'Nemáš nastavený slowmode'), hidden=True)
                         return
@@ -103,7 +124,7 @@ class Slowmode(commands.Cog):
                     await ctx.reply(embed=embeds.error('Pre zobrazenie statusu slowmodu niekoho iného musíš byť admin'), hidden=True)
                     return
 
-                if not db.user_has_slowmode(temp_user):
+                if slowmode_user is None:
                     await ctx.reply(embed=embeds.default(title=f'Nemáš nastavený slowmode'), hidden=True)
                     return
 
@@ -131,7 +152,7 @@ class Slowmode(commands.Cog):
                     else:
                         desc += f'**{user.name}#{user.discriminator}**\n'
 
-            eb.description = '**Nie sú žiadni používatelia s udeleným slowmode!**' if len(data) == 0 else desc if desc != '' else None
+            eb.description = '**Nie sú žiadni používatelia s udeleným slowmode!**' if len(data) == 0 else desc
 
             await ctx.reply(embed=eb, hidden=True)
 
@@ -140,40 +161,33 @@ class Slowmode(commands.Cog):
                 await self.check_slowmode(discord.utils.get(ctx.guild.members, id=doc['user_id']))
 
     async def check_slowmode(self, user: discord.User):
-        if self.db.user_has_slowmode(user):
-            data = self.db.slowmode.find_one({'user_id': user.id})
-
-            if data['issued_at'] + data['duration'] < time():
+        slowmode_user = self.db.slowmode_user(user)
+        if slowmode_user is not None:
+            if slowmode_user['issued_at'] + slowmode_user['duration'] < time():
                 await user.send(embed=self.embeds.default(title='Slowmode vypršal', desc='Môžeš znova písať bez obmedzení'))
                 self.db.slowmode.delete_one({'user_id': user.id})
-                return False
+                return None
             else:
-                return True
+                return slowmode_user
         else:
-            return False
+            return None
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
 
-        if await self.check_slowmode(message.author):
-            user = self.db.slowmode.find_one({'user_id': message.author.id})
-            interval = user['interval']
-            channel_id = user['channel_id']
+        slowmode_user = await self.check_slowmode(message.author)
+        if slowmode_user is not None:
+            interval = slowmode_user['interval']
+            channel_id = slowmode_user['channel_id']
             last_message = self.get_last_message(message.author.id)
 
-            if last_message is not None and last_message + interval > time():
+            if last_message is not None and interval - (time() - last_message) > 0:
                 if channel_id is None or message.channel.id == channel_id:
                     await message.delete()
-                    await message.author.send(embed=self.embeds.error(title='Nemôžeš posielať správy, pretože si dostal slowmode' if channel_id is None else 'Nemôžeš posielať správy v tomto kanáli, pretože si dostal slowmode', desc='Pre viac detailov použi **/slowmode status**'))
+                    await message.author.send(embed=self.embeds.error(title='Nemôžeš posielať správy, pretože si dostal slowmode' if channel_id is None else 'Nemôžeš posielať správy v tomto kanáli, pretože si dostal slowmode', desc=f'Pre viac detailov použi **/slowmode status**\nĎalšiu správu môžeš poslať za **{int(interval - (time() - last_message))}** sekúnd'))
             else:
                 if channel_id is None or message.channel.id == channel_id:
                     self.last_messages[message.author.id] = time()
-
-    def fetch_last_messages(self):
-        temp = {}
-        for doc in self.db.all_slowmodes():
-            temp[doc['user_id']] = doc.get('last_message')
-        return temp
 
     def get_last_message(self, user_id: int):
         local = self.last_messages.get(user_id)
@@ -198,15 +212,49 @@ class Slowmode(commands.Cog):
     async def on_bot_shutdown(self, password_used: bool):
         await self.save_last_messages()
 
-    @staticmethod
-    def slowmode_to_list(data, ctx: SlashContext):
-        users_list = [f'**Interval:** {data["interval"]} sekúnd', f'**Trvanie:** {data["duration"]} hodín']
+    @classmethod
+    def time_from_seconds(cls, _time: int, unit: str):
+        if unit == cls.SECONDS:
+            return f'{int(_time)}  {cls.time_unit_to_acronym(unit, int(_time))}'
+        elif unit == cls.MINUTES:
+            return f'{int(_time / 60)}  {cls.time_unit_to_acronym(unit, int(_time / 60))}'
+        elif unit == cls.HOURS:
+            return f'{int(_time / 3600)}  {cls.time_unit_to_acronym(unit, int(_time / 3600))}'
+
+    @classmethod
+    def time_unit_to_acronym(cls, unit: str, value: int = None):
+        if unit == cls.SECONDS:
+            if value is None or value > 4:
+                return 'sekúnd'
+            elif value == 1:
+                return 'sekunda'
+            elif 1 < value < 5:
+                return 'sekundy'
+        elif unit == cls.MINUTES:
+            if value is None or value > 4:
+                return 'minút'
+            elif value == 1:
+                return 'minúta'
+            elif 1 < value < 5:
+                return 'minúty'
+        elif unit == cls.HOURS:
+            if value is None or value > 4:
+                return 'hodín'
+            elif value == 1:
+                return 'hodina'
+            elif 1 < value < 5:
+                return 'hodiny'
+
+    @classmethod
+    def slowmode_to_list(cls, data, ctx: SlashContext):
+        users_list = [f'**Interval:** {cls.time_from_seconds(data["interval"], data["interval_unit"])}', f'**Trvanie:** {cls.time_from_seconds(data["duration"], data["duration_unit"])}']
         users_list.append(f'**Dôvod:** {data["reason"]}') if data["reason"] is not None else None
         users_list.append(f'**Kanál:** #{discord.utils.get(ctx.guild.channels, id=data["channel_id"])}') if data["channel_id"] is not None else users_list.append(f'**Kanál:** Celý server')
-        users_list.append(f'**Vyprší:** {datetime.fromtimestamp(data["issued_at"] + (data["duration"] * 3600)).strftime("%d.%m.%Y %H:%M:%S")}')
+        users_list.append(f'**Vyprší:** {datetime.fromtimestamp(data["issued_at"] + data["duration"]).strftime("%d.%m.%Y %H:%M:%S")}') if not ctx.author.guild_permissions.administrator else None
 
         if ctx.author.guild_permissions.administrator:
-            users_list.append(f'**Dátum udelenia:** {datetime.fromtimestamp(data["issued_at"]).strftime("%d.%m.%Y %H:%M:%S")}')
+            users_list.append(f'**Udelený:** {datetime.fromtimestamp(data["issued_at"]).strftime("%d.%m.%Y %H:%M:%S")}')
+            users_list.append(f'**Vyprší:** {datetime.fromtimestamp(data["issued_at"] + data["duration"]).strftime("%d.%m.%Y %H:%M:%S")}')
             users_list.append(f'**Udelil:** {data["issued_by"]}')
 
         return users_list
