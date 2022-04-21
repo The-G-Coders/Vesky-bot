@@ -1,23 +1,17 @@
-# Python discord bot
+# Vesky-bot
 
-## Required environment variables
+A discord bot built with discord.py and discord-py-slash-command to fulfill the needs of our class' discord server.
 
-- **TOKEN** - Discord bot token
-- **DATABASE_URL** - The url of a mongoDB database
-- **DATABASE** - The name of the database to use
-- **SHUTDOWN_PASSWORD** - The password used to shut down the bot
-- **DEBUG_GUILD_ID** - The guild ID of the guild to use
-- **POLL_CHANNEL_ID** - The channel ID of the channel to use for polls
-- **ANNOUNCEMENTS_CHANNEL_ID** - The channel ID of the channel to use for announcements
-- **BOT_CATEGORY_ID** - The category ID of the category to use for the bot commands
+## Using the image of this bot
 
-##### Boolean values, set to `true` or `anything else but null`
+Feel free to use the docker [image](https://hub.docker.com/repository/docker/demizon3433/vesky-bot) of this bot, however use it at your own risk. We won't take any responsibility for any damage caused by using this bot on your server.
+Note that the messages are written in the slovak language and are **not** configurable.
 
-- **EVENTS** - Whether to load the events module
-- **SLOWMODE** - Whether to load the slowmode module
-- **POLLS** - Whether to load the polls module
-- **UTILS** - Whether to load the utils module
+## Contributing
 
-#### OR
+This project is licensed under the MIT license. Feel free to fork and contribute! If you find any bugs or issues with the code, feel free to fix them!
 
-- **ENV_FILE** - Path to a file containing the required environment variables
+## Main contributors
+
+- [Damian Mikoláš](https://github.com/Demizon3433)
+- [Martin Vaško](https://github.com/MartinVasko11235)
