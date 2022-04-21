@@ -8,7 +8,7 @@ from lib.embeds import Embeds
 from lib.model import Event
 from lib.database import Database
 from lib.regex import DATE_PATTERN, TIME_PATTERN, get_separator
-from lib.utils import datetime_to_epoch, capitalize_first_letter, is_7210_secs, wrap_text, epoch, seconds_to_time
+from lib.utils import datetime_to_epoch, capitalize_first_letter, is_7210_secs, wrap_text, epoch, seconds_to_time, sorted_event_list
 
 
 class EventCommands(commands.Cog):
@@ -93,7 +93,7 @@ class EventCommands(commands.Cog):
             description='Zobrazí naplánované udalosti'
         )
         async def _event_list(ctx: SlashContext):
-            temp = db.all_events()
+            temp = sorted_event_list(db.all_events())
             embed = embeds.default(title='Kalendár')
             if len(temp) == 0:
                 embed.description = "**Kalendár je prázdny...**"
