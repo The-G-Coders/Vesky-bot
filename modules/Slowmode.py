@@ -167,10 +167,9 @@ class Slowmode(commands.Cog):
                 await user.send(embed=self.embeds.default(title='Slowmode vypršal', desc='Môžeš znova písať bez obmedzení'))
                 self.db.slowmode.delete_one({'user_id': user.id})
                 return None
-            else:
-                return slowmode_user
-        else:
-            return None
+
+            return slowmode_user
+        return None
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -193,10 +192,10 @@ class Slowmode(commands.Cog):
         local = self.last_messages.get(user_id)
         if local is not None:
             return local
-        else:
-            from_db = self.db.slowmode.find_one({'user_id': user_id}).get('last_message')
-            self.last_messages[user_id] = from_db
-            return from_db
+
+        from_db = self.db.slowmode.find_one({'user_id': user_id}).get('last_message')
+        self.last_messages[user_id] = from_db
+        return from_db
 
     @tasks.loop(minutes=2)
     async def save_last_messages(self):
@@ -216,9 +215,9 @@ class Slowmode(commands.Cog):
     def time_from_seconds(cls, _time: int, unit: str):
         if unit == cls.SECONDS:
             return f'{int(_time)}  {cls.time_unit_to_acronym(unit, int(_time))}'
-        elif unit == cls.MINUTES:
+        if unit == cls.MINUTES:
             return f'{int(_time / 60)}  {cls.time_unit_to_acronym(unit, int(_time / 60))}'
-        elif unit == cls.HOURS:
+        if unit == cls.HOURS:
             return f'{int(_time / 3600)}  {cls.time_unit_to_acronym(unit, int(_time / 3600))}'
 
     @classmethod
@@ -226,31 +225,36 @@ class Slowmode(commands.Cog):
         if unit == cls.SECONDS:
             if value is None or value > 4:
                 return 'sekúnd'
-            elif value == 1:
+            if value == 1:
                 return 'sekunda'
-            elif 1 < value < 5:
+            if 1 < value < 5:
                 return 'sekundy'
         elif unit == cls.MINUTES:
             if value is None or value > 4:
                 return 'minút'
-            elif value == 1:
+            if value == 1:
                 return 'minúta'
-            elif 1 < value < 5:
+            if 1 < value < 5:
                 return 'minúty'
         elif unit == cls.HOURS:
             if value is None or value > 4:
                 return 'hodín'
-            elif value == 1:
+            if value == 1:
                 return 'hodina'
-            elif 1 < value < 5:
+            if 1 < value < 5:
                 return 'hodiny'
 
     @classmethod
     def slowmode_to_list(cls, data, ctx: SlashContext):
         users_list = [f'**Interval:** {cls.time_from_seconds(data["interval"], data["interval_unit"])}', f'**Trvanie:** {cls.time_from_seconds(data["duration"], data["duration_unit"])}']
-        users_list.append(f'**Dôvod:** {data["reason"]}') if data["reason"] is not None else None
-        users_list.append(f'**Kanál:** #{discord.utils.get(ctx.guild.channels, id=data["channel_id"])}') if data["channel_id"] is not None else users_list.append(f'**Kanál:** Celý server')
-        users_list.append(f'**Vyprší:** {datetime.fromtimestamp(data["issued_at"] + data["duration"]).strftime("%d.%m.%Y %H:%M:%S")}') if not ctx.author.guild_permissions.administrator else None
+        if data["reason"] is not None:
+            users_list.append(f'**Dôvod:** {data["reason"]}')
+        if data["channel_id"] is not None:
+            users_list.append(f'**Kanál:** #{discord.utils.get(ctx.guild.channels, id=data["channel_id"])}')
+        else:
+            users_list.append(f'**Kanál:** Celý server')
+        if not ctx.author.guild_permissions.administrator:
+            users_list.append(f'**Vyprší:** {datetime.fromtimestamp(data["issued_at"] + data["duration"]).strftime("%d.%m.%Y %H:%M:%S")}')
 
         if ctx.author.guild_permissions.administrator:
             users_list.append(f'**Udelený:** {datetime.fromtimestamp(data["issued_at"]).strftime("%d.%m.%Y %H:%M:%S")}')
