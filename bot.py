@@ -37,7 +37,7 @@ slash = discord_slash.SlashCommand(bot, sync_commands=True, debug_guild=GUILD_ID
     name='help',
     description='Vypíše všetky príkazy'
 )
-async def help(ctx: SlashContext):
+async def _help(ctx: SlashContext):
     category_id = int(getenv('BOT_CATEGORY_ID'))
     if ctx.channel.category_id != category_id:
         await ctx.reply(embed=embeds.error(f"Tento command môžeš použiť len v {utils.get(bot.get_guild(GUILD_ID).categories, id=category_id).name} kategórii"), hidden=True)
@@ -70,7 +70,7 @@ async def on_slash_command_error(ctx: SlashContext, error: Exception):
     if isinstance(error, commands.MissingPermissions):
         await ctx.reply(embed=embeds.error('Na použitie tohto príkazu nemáš oprávnenie'), hidden=True)
         return
-    elif isinstance(error, discord.client.Forbidden):
+    if isinstance(error, discord.client.Forbidden):
         await ctx.reply(embed=embeds.error('Na vykonanie tohto príkazu nemám oprávnenie.\nKontaktuj administrátora'), hidden=True)
         return
     raise error

@@ -51,7 +51,7 @@ class UtilCommands(commands.Cog):
             if count > 100:
                 await ctx.reply(embed=embeds.error('Môžeš vymazať najviac 100 správ naraz'), hidden=True)
                 return
-            else:
-                await ctx.channel.purge(limit=count)
+
+            await ctx.channel.purge(limit=count)
 
             await ctx.reply(embed=embeds.default(title='Správy úspešne vymazané'), hidden=True)
