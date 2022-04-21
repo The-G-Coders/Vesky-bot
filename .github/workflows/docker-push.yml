@@ -16,4 +16,6 @@ jobs:
       - name: 'Push Docker Image'
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/vesky-bot:$(echo ${GITHUB_REF:10})
+          |
+          docker push ${{ secrets.DOCKER_USERNAME }}/vesky-bot:latest
 
