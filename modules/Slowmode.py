@@ -223,26 +223,20 @@ class Slowmode(commands.Cog):
     @classmethod
     def time_unit_to_acronym(cls, unit: str, value: int = None):
         if unit == cls.SECONDS:
-            if value is None or value > 4:
-                return 'sekúnd'
-            if value == 1:
-                return 'sekunda'
-            if 1 < value < 5:
-                return 'sekundy'
+            return cls.time_unit(value, ['sekunda', 'sekundy', 'sekúnd'])
         elif unit == cls.MINUTES:
-            if value is None or value > 4:
-                return 'minút'
-            if value == 1:
-                return 'minúta'
-            if 1 < value < 5:
-                return 'minúty'
+            return cls.time_unit(value, ['minúta', 'minúty', 'minút'])
         elif unit == cls.HOURS:
-            if value is None or value > 4:
-                return 'hodín'
-            if value == 1:
-                return 'hodina'
-            if 1 < value < 5:
-                return 'hodiny'
+            return cls.time_unit(value, ['hodina', 'hodiny', 'hodín'])
+
+    @staticmethod
+    def time_unit(value: int, unit_possibilities: list):
+        if value is None or value > 4:
+            return unit_possibilities[0]
+        if value == 1:
+            return unit_possibilities[1]
+        if 1 < value < 5:
+            return unit_possibilities[2]
 
     @classmethod
     def slowmode_to_list(cls, data, ctx: SlashContext):

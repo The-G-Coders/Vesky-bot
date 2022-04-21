@@ -19,6 +19,4 @@ class Event(TypedDict):
     description: str
     time: int
     role: Any
-    utc_time: float  # TODO int?
-
-
+    utc_time: float
