@@ -1,6 +1,7 @@
 todo.txt
 remove-commands.py
-README.md
+*.md
+LICENSE
 resources/
 .env*
 *.bat
