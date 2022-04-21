@@ -17,10 +17,10 @@ jobs:
         run: echo Loading environment variables
       - name: 'Build Docker Image'
         run: |
-          docker build . -t $(echo $REPO_NAME):$(echo $REPO_VERSION)
+          docker build . -t $(echo $REPO_NAME)
       - name: 'Tag Docker Image'
         run: |
-          docker tag $(echo $REPO_NAME):$(echo $REPO_VERSION) $(echo $REPO_NAME):latest
+          docker tag $(echo $REPO_NAME) $(echo $REPO_NAME):$(echo $REPO_VERSION)
       - name: 'Push Docker Image'
         run: |
           docker push $(echo $REPO_NAME):latest
