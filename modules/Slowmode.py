@@ -224,9 +224,9 @@ class Slowmode(commands.Cog):
     def time_unit_to_acronym(cls, unit: str, value: int = None):
         if unit == cls.SECONDS:
             return cls.time_unit(value, ['sekunda', 'sekundy', 'sekúnd'])
-        elif unit == cls.MINUTES:
+        if unit == cls.MINUTES:
             return cls.time_unit(value, ['minúta', 'minúty', 'minút'])
-        elif unit == cls.HOURS:
+        if unit == cls.HOURS:
             return cls.time_unit(value, ['hodina', 'hodiny', 'hodín'])
 
     @staticmethod
