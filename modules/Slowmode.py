@@ -50,7 +50,7 @@ class Slowmode(commands.Cog):
 
             slowmode_user = db.slowmode_user(user)
             if slowmode_user is not None:
-                await ctx.reply(embed=embeds.error(f'{user.mention} už má slowmode'), hidden=True)
+                await ctx.reply(embed=embeds.error(f'{user.name}#{user.discriminator} už má slowmode'), hidden=True)
                 return
 
             new_duration = duration if duration_unit == self.SECONDS else duration * 60 if duration_unit == self.MINUTES else duration * 3600
