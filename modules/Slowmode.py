@@ -48,8 +48,7 @@ class Slowmode(commands.Cog):
                 await ctx.reply(embed=embeds.error('Nemôžeš nastaviť slowmode administrátorovi'), hidden=True)
                 return
 
-            slowmode_user = db.slowmode_user(user)
-            if slowmode_user is not None:
+            if self.check_slowmode(user) is not None:
                 await ctx.reply(embed=embeds.error(f'{user.name}#{user.discriminator} už má slowmode'), hidden=True)
                 return
 
