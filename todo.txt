@@ -3,6 +3,8 @@ TODO:
     Fix notifying user when he gets slowmode
     per user slow-mode
     event without time deleting after announcement(should be the next day)
+    link shortener
+    create tests
 
 IDEAS:
     upgrade clear command to user filtering
