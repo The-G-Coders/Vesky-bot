@@ -13,10 +13,10 @@ class Database:
         self.slowmode = self.db["users_slowmode"]
 
     def get_event(self, name: str):
-        return self.events.find_one({'name': name.replace(' ', '_')})
+        return self.events.find_one({'name': name.strip()})
 
     def delete_event(self, name: str):
-        self.events.delete_one({'name': name.replace(' ', '_')})
+        self.events.delete_one({'name': name.strip()})
 
     def all_events(self):
         return list(self.events.find({}))
@@ -31,4 +31,4 @@ class Database:
         return self.slowmode.find_one({'user_id': user.id})
 
     def event_exists(self, name: str):
-        return self.events.find_one({'name': name.strip().replace(' ', '_')}) is not None
+        return self.events.find_one({'name': name.strip()}) is not None

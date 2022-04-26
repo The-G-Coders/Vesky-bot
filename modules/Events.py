@@ -56,7 +56,7 @@ class EventCommands(commands.Cog):
                 ping_time = datetime_to_epoch(datetime(int(date_list[2]), int(date_list[1]), int(date_list[0]), 2, 0, 10), 2, 0, 10)
 
             event: Event = {
-                'name': name.strip().replace(' ', '_'),
+                'name': name.strip(),
                 'author_id': ctx.author.id,
                 'description': capitalize_first_letter(description),
                 'time': ping_time,
@@ -105,7 +105,7 @@ class EventCommands(commands.Cog):
                     value = desc + '\n**Dátum:** ' + strftime('%d.%m.%Y', localtime(event['utc_time']))
                 else:
                     value = desc + '\n**Dátum:** ' + strftime('%H:%M:%S %d.%m.%Y', localtime(event['utc_time']))
-                embed.add_field(name=event['name'].replace('_', ' '), value=value, inline=False)
+                embed.add_field(name=event['name'], value=value, inline=False)
             await ctx.reply(embed=embed, hidden=True)
 
 
@@ -145,7 +145,7 @@ class EventAnnouncementTask(commands.Cog):
                 desc = f'{event.get("description")} \n'
                 desc += f'**Čas:** {seconds_to_time(event.get("time"))} \n'
                 eb = self.embeds.default(title=f"O chvíľu začina event...")
-                eb.add_field(name=event['name'].replace('_', ' '), value=desc, inline=False)
+                eb.add_field(name=event['name'], value=desc, inline=False)
                 role = event.get('role')
                 ping = '@everyone' if role == 'everyone' else self.bot.get_guild(int(getenv("DEBUG_GUILD_ID"))).get_role(role).mention if role != 'no-role' else None
                 if ping is not None:
