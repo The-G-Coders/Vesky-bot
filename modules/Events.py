@@ -79,11 +79,11 @@ class EventCommands(commands.Cog):
                 await ctx.reply(embed=embeds.error('Event s takýmto menom neexistuje'), hidden=True)
                 return
 
-            if not ctx.author.guild_permissions.administrator and ctx.author.id != db.events.find_one({'name': name})['author_id']:
+            if not ctx.author.guild_permissions.administrator and ctx.author.id != db.get_event(name)['author_id']:
                 await ctx.reply(embed=embeds.error('Nemáš práva na zmazanie tejto udalosti'), hidden=True)
                 return
 
-            db.events.delete_one({'name': name.strip().replace(' ', '_')})
+            db.delete_event(name)
 
             await ctx.reply(embed=embeds.default(title='Udalosť bola úspešne zmazaná!'), hidden=True)
 
