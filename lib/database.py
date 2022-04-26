@@ -12,6 +12,12 @@ class Database:
         self.shutdowns = self.db["shutdowns"]
         self.slowmode = self.db["users_slowmode"]
 
+    def get_event(self, name: str):
+        return self.events.find_one({'name': name.replace(' ', '_')})
+
+    def delete_event(self, name: str):
+        self.events.delete_one({'name': name.replace(' ', '_')})
+
     def all_events(self):
         return list(self.events.find({}))
 
