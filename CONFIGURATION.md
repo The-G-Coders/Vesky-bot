@@ -20,4 +20,4 @@
 
 #### OR
 
-- **ENV_FILE** - Path to a file containing the required environment variables(eg. **relative**: `resources/.env` or **absolute**: `/home/user/.env`)
+- **ENV_FILE** - Path to a file containing the required environment variables(e.g. **relative**: `resources/.env` or **absolute**: `/home/user/.env`)
