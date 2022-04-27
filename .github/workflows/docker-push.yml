@@ -22,5 +22,3 @@ jobs:
       - name: 'Push latest Docker Image'
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/vesky-bot:latest
-          
-
